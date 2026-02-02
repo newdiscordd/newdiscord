@@ -1,42 +1,36 @@
-# Этап 1: Сборка (Builder)
 FROM node:20-alpine AS builder
 
-# Устанавливаем системные зависимости для Prisma
 RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
 # Копируем файлы зависимостей
 COPY package*.json ./
-COPY prisma ./prisma/
 
-# 1. Устанавливаем зависимости, ИГНОРИРУЯ скрипты (это лечит ошибку 127)
+# Устанавливаем зависимости (игнорируя скрипты для стабильности)
+# Мы явно устанавливаем prisma 6-й версии
+RUN npm install prisma@^6.0.0 @prisma/client@^6.0.0
 RUN npm install --ignore-scripts
 
-# 2. Явно запускаем генерацию Prisma через npx
+COPY prisma ./prisma/
+
+# Генерируем клиент Prisma (теперь на 6-й версии это сработает)
 RUN npx prisma generate
 
-# Копируем исходный код
 COPY . .
 
-# Собираем проект
+# Сборка
 RUN npm run build
 
-# Этап 2: Запуск (Runner)
+# Этап запуска
 FROM node:20-alpine AS runner
-
 WORKDIR /app
-
-# Системные зависимости для продакшена
 RUN apk add --no-cache openssl
-
 ENV NODE_ENV=production
 
-# Создаем пользователя
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Копируем необходимые файлы из билдера
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
