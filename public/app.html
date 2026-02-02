@@ -77,6 +77,23 @@
         </div>
     </div>
 
+    <!-- Модальное окно: Создать сервер -->
+    <div id="create-server-modal" class="modal">
+        <div class="bg-[#2B2D31] rounded-lg p-6 w-[400px]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Создать сервер</h3>
+                <button onclick="closeModal('create-server-modal')" class="text-gray-400 hover:text-white">
+                    <i data-lucide="x" width="20"></i>
+                </button>
+            </div>
+            <input id="server-name-input" type="text" placeholder="Название сервера" 
+                   class="w-full bg-[#1E1F22] p-3 rounded outline-none mb-4 text-white">
+            <button onclick="createServer()" class="w-full bg-[#5865F2] hover:bg-[#4752C4] p-3 rounded text-white font-bold">
+                Создать
+            </button>
+        </div>
+    </div>
+
     <!-- Модальное окно: Создать приглашение -->
     <div id="create-invite-modal" class="modal">
         <div class="bg-[#2B2D31] rounded-lg p-6 w-[400px]">
@@ -105,10 +122,24 @@
 
     <!-- Список серверов -->
     <div id="server-list" class="w-[72px] bg-[#1E1F22] pt-3 flex flex-col items-center gap-2 overflow-y-auto">
-        <!-- Кнопка "Добавить сервер" -->
-        <div onclick="openModal('join-server-modal')" 
-             class="w-12 h-12 bg-[#313338] rounded-[24px] hover:rounded-[16px] hover:bg-[#23A559] flex items-center justify-center cursor-pointer transition-all text-white">
-            <i data-lucide="plus" width="24"></i>
+        <!-- Меню "Добавить сервер" -->
+        <div class="relative group">
+            <div class="w-12 h-12 bg-[#313338] rounded-[24px] hover:rounded-[16px] hover:bg-[#23A559] flex items-center justify-center cursor-pointer transition-all text-white">
+                <i data-lucide="plus" width="24"></i>
+            </div>
+            <!-- Выпадающее меню -->
+            <div class="hidden group-hover:block absolute left-16 top-0 bg-[#111214] rounded-lg shadow-xl p-2 w-48 z-50">
+                <div onclick="openModal('create-server-modal')" 
+                     class="px-3 py-2 hover:bg-[#5865F2] rounded cursor-pointer text-white flex items-center gap-2">
+                    <i data-lucide="plus-circle" width="16"></i>
+                    <span>Создать сервер</span>
+                </div>
+                <div onclick="openModal('join-server-modal')" 
+                     class="px-3 py-2 hover:bg-[#5865F2] rounded cursor-pointer text-white flex items-center gap-2">
+                    <i data-lucide="compass" width="16"></i>
+                    <span>Присоединиться</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -260,22 +291,28 @@
 
         // --- ДРУЗЬЯ ---
         async function sendFriendRequest(receiverId) {
-            const res = await fetch('/api/friends/request', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}` 
-                },
-                body: JSON.stringify({ receiverId })
-            });
-            
-            if (res.ok) {
-                const request = await res.json();
-                state.friendRequests.push(request);
-                searchUsers(document.getElementById('user-search').value);
-            } else {
-                const error = await res.json();
-                alert(error.error);
+            try {
+                const res = await fetch('/api/friends/request', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ receiverId })
+                });
+                
+                if (res.ok) {
+                    const request = await res.json();
+                    state.friendRequests.push(request);
+                    searchUsers(document.getElementById('user-search').value);
+                    alert('Заявка отправлена!');
+                } else {
+                    const error = await res.json();
+                    alert(error.error || 'Ошибка при отправке заявки');
+                }
+            } catch (e) {
+                console.error('Error sending friend request:', e);
+                alert('Не удалось отправить заявку. Проверьте подключение к интернету.');
             }
         }
 
@@ -429,13 +466,42 @@
             }
         }
 
+        async function createServer() {
+            const name = document.getElementById('server-name-input').value.trim();
+            if (!name) {
+                alert('Введите название сервера');
+                return;
+            }
+            
+            const res = await fetch('/api/servers/create', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify({ name })
+            });
+            
+            if (res.ok) {
+                const server = await res.json();
+                state.servers.push(server);
+                renderServers();
+                selectServer(server);
+                closeModal('create-server-modal');
+                document.getElementById('server-name-input').value = '';
+            } else {
+                const error = await res.json();
+                alert(error.error);
+            }
+        }
+
         // Рендер серверов
         function renderServers() {
             const container = document.getElementById('server-list');
-            const addServerBtn = container.children[0]; // Сохраняем кнопку "+"
+            const addServerMenu = container.children[0]; // Сохраняем меню "+"
             
             container.innerHTML = '';
-            container.appendChild(addServerBtn); // Возвращаем кнопку "+"
+            container.appendChild(addServerMenu); // Возвращаем меню "+"
             
             state.servers.forEach(s => {
                 const div = document.createElement('div');
