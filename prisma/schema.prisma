@@ -15,6 +15,8 @@ model User {
   avatar    String?
   members   Member[]
   messages  Message[]
+  sentRequests     FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
 }
 
 model Server {
@@ -23,6 +25,7 @@ model Server {
   ownerId   String
   channels  Channel[]
   members   Member[]
+  invites   Invite[]
 }
 
 model Channel {
@@ -30,24 +33,48 @@ model Channel {
   name      String
   type      String   // TEXT or VOICE
   serverId  String
-  server    Server   @relation(fields: [serverId], references: [id])
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
   messages  Message[]
 }
 
 model Member {
   id       String @id @default(uuid())
   userId   String
-  user     User   @relation(fields: [userId], references: [id])
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   serverId String
-  server   Server @relation(fields: [serverId], references: [id])
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, serverId])
 }
 
 model Message {
   id        String   @id @default(uuid())
   content   String
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   channelId String
-  channel   Channel  @relation(fields: [channelId], references: [id])
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  serverId  String
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  createdBy String
+  expiresAt DateTime?
+  maxUses   Int?
+  uses      Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model FriendRequest {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String   // PENDING, ACCEPTED, REJECTED
+  createdAt  DateTime @default(now())
 }
