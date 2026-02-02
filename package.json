@@ -9,6 +9,7 @@
     "postinstall": "npx prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.0.0",
     "concurrently": "^8.2.0"
   }
 }
