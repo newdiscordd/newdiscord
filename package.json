@@ -2,13 +2,11 @@
   "name": "discordia",
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
-    "build": "cd client && npm install && npm run build && cd ../server && npm install && npm run build",
-    "start": "cd server && npm run start",
-    "postinstall": "cd client && npm install && cd ../server && npm install && npx prisma generate",
-    "seed": "cd server && npx prisma db seed"
+    "dev": "next dev",
+    "build": "npx prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "concurrently": "^8.2.0"
