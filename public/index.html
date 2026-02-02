@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Discord Lite - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#313338] text-white flex items-center justify-center h-screen font-sans">
+    <div class="bg-[#2B2D31] p-8 rounded shadow-lg w-96">
+        <h2 class="text-2xl font-bold mb-6 text-center">Welcome</h2>
+        <form id="form" class="space-y-4">
+            <input id="email" type="email" placeholder="Email" class="w-full bg-[#1E1F22] p-3 rounded outline-none" required>
+            <input id="password" type="password" placeholder="Password" class="w-full bg-[#1E1F22] p-3 rounded outline-none" required>
+            <div class="flex gap-2">
+                <button type="button" onclick="submitAuth('login')" class="flex-1 bg-[#5865F2] hover:bg-[#4752C4] p-2 rounded">Login</button>
+                <button type="button" onclick="submitAuth('register')" class="flex-1 bg-gray-600 hover:bg-gray-700 p-2 rounded">Register</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        // Если уже вошли, кидаем в приложение
+        if(localStorage.getItem('token')) window.location.href = '/app.html';
+
+        async function submitAuth(type) {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, type })
+            });
+            const data = await res.json();
+            if(data.token) {
+                localStorage.setItem('token', data.token);
+                window.location.href = '/app.html';
+            } else {
+                alert(data.error);
+            }
+        }
+    </script>
+</body>
+</html>
