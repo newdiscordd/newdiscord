@@ -153,18 +153,38 @@ app.post('/api/friends/request', auth, async (req, res) => {
     const { receiverId } = req.body;
     
     try {
+        // Проверяем, что это не запрос самому себе
+        if (receiverId === req.user.userId) {
+            return res.status(400).json({ error: "Нельзя добавить себя в друзья" });
+        }
+        
+        // Проверяем, существует ли получатель
+        const receiver = await prisma.user.findUnique({
+            where: { id: receiverId }
+        });
+        
+        if (!receiver) {
+            return res.status(404).json({ error: "Пользователь не найден" });
+        }
+        
         // Проверяем, не отправлена ли уже заявка
         const existing = await prisma.friendRequest.findFirst({
             where: {
                 OR: [
-                    { senderId: req.user.userId, receiverId },
-                    { senderId: receiverId, receiverId: req.user.userId }
+                    { senderId: req.user.userId, receiverId, status: 'PENDING' },
+                    { senderId: receiverId, receiverId: req.user.userId, status: 'PENDING' },
+                    { senderId: req.user.userId, receiverId, status: 'ACCEPTED' },
+                    { senderId: receiverId, receiverId: req.user.userId, status: 'ACCEPTED' }
                 ]
             }
         });
         
         if (existing) {
-            return res.status(400).json({ error: "Заявка уже существует" });
+            if (existing.status === 'PENDING') {
+                return res.status(400).json({ error: "Заявка уже отправлена" });
+            } else if (existing.status === 'ACCEPTED') {
+                return res.status(400).json({ error: "Вы уже друзья" });
+            }
         }
         
         const request = await prisma.friendRequest.create({
@@ -181,8 +201,8 @@ app.post('/api/friends/request', auth, async (req, res) => {
         
         res.json(request);
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: "Ошибка создания заявки" });
+        console.error('Friend request error:', e);
+        res.status(500).json({ error: "Ошибка создания заявки: " + e.message });
     }
 });
 
@@ -215,6 +235,39 @@ app.post('/api/friends/respond', auth, async (req, res) => {
 });
 
 // --- API: ПРИГЛАШЕНИЯ НА СЕРВЕРЫ ---
+
+app.post('/api/servers/create', auth, async (req, res) => {
+    const { name } = req.body;
+    
+    if (!name || name.trim().length === 0) {
+        return res.status(400).json({ error: "Название сервера не может быть пустым" });
+    }
+    
+    try {
+        const server = await prisma.server.create({
+            data: {
+                name: name.trim(),
+                ownerId: req.user.userId,
+                channels: { 
+                    create: [
+                        { name: "general", type: "TEXT" }, 
+                        { name: "voice-room", type: "VOICE" }
+                    ] 
+                },
+                members: { create: { userId: req.user.userId } }
+            },
+            include: {
+                channels: true,
+                members: { include: { user: true } }
+            }
+        });
+        
+        res.json(server);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "Ошибка создания сервера" });
+    }
+});
 
 app.post('/api/invites/create', auth, async (req, res) => {
     const { serverId } = req.body;
