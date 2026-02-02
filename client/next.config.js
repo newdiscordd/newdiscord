@@ -6,7 +6,7 @@ const nextConfig = {
   },
   // Добавляем игнорирование ошибок линтинга при билде для скорости
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true
