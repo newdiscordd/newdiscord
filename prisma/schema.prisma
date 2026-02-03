@@ -78,3 +78,14 @@ model FriendRequest {
   status     String   // PENDING, ACCEPTED, REJECTED
   createdAt  DateTime @default(now())
 }
+
+model DirectMessage {
+  id         String   @id @default(uuid())
+  content    String
+  senderId   String
+  receiverId String
+  createdAt  DateTime @default(now())
+  
+  @@index([senderId, receiverId])
+  @@index([receiverId, senderId])
+}
