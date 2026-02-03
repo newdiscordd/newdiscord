@@ -502,8 +502,7 @@ app.post('/api/invites/join', auth, async (req, res) => {
 // --- SOCKET.IO: ЧАТ И ГОЛОС ---
 
 // Кто в какой комнате (для голоса)
-const voiceRooms = {}; // { channelId: [socketId, ...] }
-const socketToUser = {}; // { socketId: userId }
+const voiceRooms = {}; // { channelId: [{ socketId, userId, username, avatar }, ...] }
 
 io.on('connection', (socket) => {
     console.log('User connected', socket.id);
@@ -546,39 +545,126 @@ io.on('connection', (socket) => {
     });
 
     // --- ГОЛОС (WebRTC Signaling) ---
-    // Мы просто пересылаем данные между клиентами
     
-    socket.on('join-voice', ({ channelId, userId }) => {
-        if (!voiceRooms[channelId]) voiceRooms[channelId] = [];
-        const usersInRoom = voiceRooms[channelId]; // Список socketId тех, кто уже там
-        
-        // Говорим новому юзеру: "Вот список тех, кто уже тут, позвони им"
-        socket.emit('all-users', usersInRoom);
-        
-        // Добавляем нового в список
-        voiceRooms[channelId].push(socket.id);
-        socketToUser[socket.id] = userId;
+    socket.on('join-voice', async ({ channelId, userId }) => {
+        try {
+            // Получаем информацию о пользователе
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true, username: true, avatar: true }
+            });
+            
+            if (!user) return;
+            
+            if (!voiceRooms[channelId]) voiceRooms[channelId] = [];
+            
+            // Получаем список пользователей уже в комнате (без текущего)
+            const usersInRoom = voiceRooms[channelId].map(u => ({
+                socketId: u.socketId,
+                userId: u.userId,
+                username: u.username,
+                avatar: u.avatar
+            }));
+            
+            // Отправляем новому пользователю список тех, кто уже в комнате
+            socket.emit('all-users', usersInRoom);
+            
+            // Добавляем нового пользователя в комнату
+            voiceRooms[channelId].push({
+                socketId: socket.id,
+                userId: user.id,
+                username: user.username,
+                avatar: user.avatar
+            });
+            
+            // Оповещаем всех в канале о новом пользователе
+            io.emit('voice-users-updated', {
+                channelId,
+                users: voiceRooms[channelId].map(u => ({
+                    userId: u.userId,
+                    username: u.username,
+                    avatar: u.avatar
+                }))
+            });
+            
+            console.log(`✅ ${user.username} присоединился к голосовому каналу ${channelId}`);
+        } catch (e) {
+            console.error('Error joining voice:', e);
+        }
     });
 
     // Пересылка сигнала (Offer/Answer/Candidate) конкретному юзеру
     socket.on('sending-signal', payload => {
-        io.to(payload.userToSignal).emit('user-joined', { signal: payload.signal, callerID: payload.callerID });
+        io.to(payload.userToSignal).emit('user-joined', { 
+            signal: payload.signal, 
+            callerID: payload.callerID,
+            userInfo: payload.userInfo
+        });
     });
 
     socket.on('returning-signal', payload => {
-        io.to(payload.callerID).emit('receiving-returned-signal', { signal: payload.signal, id: socket.id });
+        io.to(payload.callerID).emit('receiving-returned-signal', { 
+            signal: payload.signal, 
+            id: socket.id,
+            userInfo: payload.userInfo
+        });
+    });
+
+    // Выход из голосового канала
+    socket.on('leave-voice', ({ channelId }) => {
+        if (voiceRooms[channelId]) {
+            const userIndex = voiceRooms[channelId].findIndex(u => u.socketId === socket.id);
+            if (userIndex !== -1) {
+                const user = voiceRooms[channelId][userIndex];
+                voiceRooms[channelId] = voiceRooms[channelId].filter(u => u.socketId !== socket.id);
+                
+                // Говорим остальным убрать этого пользователя
+                voiceRooms[channelId].forEach(remainingUser => {
+                    io.to(remainingUser.socketId).emit('user-left', socket.id);
+                });
+                
+                // Обновляем список активных пользователей
+                io.emit('voice-users-updated', {
+                    channelId,
+                    users: voiceRooms[channelId].map(u => ({
+                        userId: u.userId,
+                        username: u.username,
+                        avatar: u.avatar
+                    }))
+                });
+                
+                console.log(`❌ ${user.username} покинул голосовой канал ${channelId}`);
+            }
+        }
     });
 
     // Выход
     socket.on('disconnect', () => {
         // Удаляем из голосовых комнат
-        for (const [roomId, users] of Object.entries(voiceRooms)) {
-            if (users.includes(socket.id)) {
-                voiceRooms[roomId] = users.filter(id => id !== socket.id);
-                // Говорим остальным убрать видео этого юзера
+        for (const [channelId, users] of Object.entries(voiceRooms)) {
+            const userIndex = users.findIndex(u => u.socketId === socket.id);
+            if (userIndex !== -1) {
+                const user = users[userIndex];
+                voiceRooms[channelId] = users.filter(u => u.socketId !== socket.id);
+                
+                // Говорим остальным убрать этого пользователя
                 users.forEach(remainingUser => {
-                    io.to(remainingUser).emit('user-left', socket.id);
+                    if (remainingUser.socketId !== socket.id) {
+                        io.to(remainingUser.socketId).emit('user-left', socket.id);
+                    }
                 });
+                
+                // Обновляем список активных пользователей
+                io.emit('voice-users-updated', {
+                    channelId,
+                    users: voiceRooms[channelId].map(u => ({
+                        userId: u.userId,
+                        username: u.username,
+                        avatar: u.avatar
+                    }))
+                });
+                
+                console.log(`❌ ${user.username} покинул голосовой канал ${channelId}`);
             }
         }
     });
