@@ -222,6 +222,9 @@
             activeChannel: null,
             activeFriend: null,
             friendRequests: [],
+            channelsByServer: {},
+            membersByServer: {},
+            loadingServerDetails: {},
             peers: [], 
             myStream: null,
             micTrack: null,
@@ -238,8 +241,10 @@
             const res = await fetch('/api/data', { headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
             state.user = data.user;
-            state.servers = data.servers;
             state.friendRequests = data.friendRequests || [];
+
+            const serversRes = await fetch('/api/servers', { headers: { Authorization: `Bearer ${token}` } });
+            state.servers = await serversRes.json();
             
             state.friends = state.friendRequests
                 .filter(fr => fr.status === 'ACCEPTED')
@@ -297,6 +302,40 @@
             updateFriendRequestsBadge();
             showDirectMessages();
             lucide.createIcons();
+        }
+
+        async function loadServerChannels(serverId) {
+            const res = await fetch(`/api/channels/${serverId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) return [];
+            const channels = await res.json();
+            state.channelsByServer[serverId] = channels;
+            return channels;
+        }
+
+        async function loadServerMembers(serverId, page = 1) {
+            const res = await fetch(`/api/members/${serverId}?page=${page}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            state.membersByServer[serverId] = data;
+            return data;
+        }
+
+        async function ensureServerDetails(serverId) {
+            if (state.loadingServerDetails[serverId]) return;
+            const needsChannels = !state.channelsByServer[serverId];
+            const needsMembers = !state.membersByServer[serverId];
+            if (!needsChannels && !needsMembers) return;
+
+            state.loadingServerDetails[serverId] = true;
+            await Promise.all([
+                needsChannels ? loadServerChannels(serverId) : Promise.resolve(),
+                needsMembers ? loadServerMembers(serverId) : Promise.resolve()
+            ]);
+            state.loadingServerDetails[serverId] = false;
         }
 
         function openModal(id) {
@@ -432,21 +471,40 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        function selectServer(server) {
+        async function selectServer(server) {
             state.activeView = 'server';
             state.activeServer = server;
             state.activeFriend = null;
+            state.activeChannel = null;
             
             document.getElementById('sidebar-title').innerText = server.name;
             document.getElementById('invite-btn').classList.remove('hidden');
             document.getElementById('voice-call-btn').classList.add('hidden');
             
+            const loadPromise = ensureServerDetails(server.id);
+            renderChannelsList();
+            await loadPromise;
             renderChannelsList();
         }
 
         function renderChannelsList() {
             const container = document.getElementById('sidebar-content');
-            container.innerHTML = state.activeServer.channels.map(c => {
+            if (!state.activeServer) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const channels = state.channelsByServer[state.activeServer.id] || [];
+            if (channels.length === 0) {
+                if (state.loadingServerDetails[state.activeServer.id]) {
+                    container.innerHTML = '<div class="text-center text-gray-400 py-6 text-sm">Загрузка каналов...</div>';
+                    return;
+                }
+                container.innerHTML = '<div class="text-center text-gray-400 py-6 text-sm">Нет каналов</div>';
+                return;
+            }
+
+            container.innerHTML = channels.map(c => {
                 let channelHtml = `
                     <div onclick="joinChannel('${c.id}', '${c.type}')" 
                          class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-[#35373C] hover:text-white ${state.activeChannel?.id === c.id ? 'active-channel' : ''}">
@@ -472,7 +530,9 @@
         }
 
         async function joinChannel(id, type) {
-            const channel = state.activeServer.channels.find(c => c.id === id);
+            const channels = state.channelsByServer[state.activeServer.id] || [];
+            const channel = channels.find(c => c.id === id);
+            if (!channel) return;
             state.activeChannel = channel;
             document.getElementById('channel-header').innerText = (type === 'TEXT' ? '# ' : '🔊 ') + channel.name;
             
@@ -1087,7 +1147,10 @@
             
             if (res.ok) {
                 const server = await res.json();
-                state.servers.push(server);
+                state.servers.push({ id: server.id, name: server.name, ownerId: server.ownerId });
+                if (server.channels) {
+                    state.channelsByServer[server.id] = server.channels;
+                }
                 renderServers();
                 selectServer(server);
                 closeModal('create-server-modal');
@@ -1114,6 +1177,8 @@
             if (res.ok) {
                 const data = await res.json();
                 state.servers = data.servers;
+                state.channelsByServer = {};
+                state.membersByServer = {};
                 renderServers();
                 closeModal('join-server-modal');
                 document.getElementById('invite-code-input').value = '';
