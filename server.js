@@ -16,6 +16,17 @@ const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret123';
 
+// Проверка подключения к базе данных
+prisma.$connect()
+    .then(() => console.log('✅ Подключение к базе данных установлено'))
+    .catch(err => {
+        console.error('❌ Ошибка подключения к базе данных:', err);
+        process.exit(1);
+    });
+
+// Логирование доступных моделей Prisma
+console.log('📊 Доступные модели Prisma:', Object.keys(prisma).filter(key => !key.startsWith('_') && !key.startsWith('$')));
+
 // Раздаем статические файлы (наши html)
 app.use(express.static('public'));
 app.use(express.json());
@@ -152,11 +163,23 @@ app.get('/api/users/search', auth, async (req, res) => {
 app.post('/api/friends/request', auth, async (req, res) => {
     const { receiverId } = req.body;
     
+    console.log('🔔 Получен запрос на добавление в друзья:', { senderId: req.user.userId, receiverId });
+    
     try {
         // Проверяем, что это не запрос самому себе
         if (receiverId === req.user.userId) {
+            console.log('❌ Попытка добавить себя в друзья');
             return res.status(400).json({ error: "Нельзя добавить себя в друзья" });
         }
+        
+        // Проверяем наличие модели friendRequest в Prisma
+        if (!prisma.friendRequest) {
+            console.error('❌ Модель friendRequest не найдена в Prisma!');
+            console.error('Доступные модели:', Object.keys(prisma).filter(key => !key.startsWith('_') && !key.startsWith('$')));
+            return res.status(500).json({ error: "Модель friendRequest не инициализирована. Выполните: npx prisma generate && npx prisma db push" });
+        }
+        
+        console.log('✅ Модель friendRequest доступна');
         
         // Проверяем, существует ли получатель
         const receiver = await prisma.user.findUnique({
@@ -164,8 +187,11 @@ app.post('/api/friends/request', auth, async (req, res) => {
         });
         
         if (!receiver) {
+            console.log('❌ Получатель не найден:', receiverId);
             return res.status(404).json({ error: "Пользователь не найден" });
         }
+        
+        console.log('✅ Получатель найден:', receiver.username);
         
         // Проверяем, не отправлена ли уже заявка
         const existing = await prisma.friendRequest.findFirst({
@@ -180,12 +206,15 @@ app.post('/api/friends/request', auth, async (req, res) => {
         });
         
         if (existing) {
+            console.log('⚠️ Заявка уже существует:', existing.status);
             if (existing.status === 'PENDING') {
                 return res.status(400).json({ error: "Заявка уже отправлена" });
             } else if (existing.status === 'ACCEPTED') {
                 return res.status(400).json({ error: "Вы уже друзья" });
             }
         }
+        
+        console.log('✅ Создаю новую заявку...');
         
         const request = await prisma.friendRequest.create({
             data: {
@@ -199,9 +228,10 @@ app.post('/api/friends/request', auth, async (req, res) => {
             }
         });
         
+        console.log('✅ Заявка создана:', request.id);
         res.json(request);
     } catch (e) {
-        console.error('Friend request error:', e);
+        console.error('❌ Ошибка создания заявки в друзья:', e);
         res.status(500).json({ error: "Ошибка создания заявки: " + e.message });
     }
 });
@@ -236,14 +266,76 @@ app.post('/api/friends/respond', auth, async (req, res) => {
 
 // --- API: ПРИГЛАШЕНИЯ НА СЕРВЕРЫ ---
 
+app.post('/api/dm/messages', auth, async (req, res) => {
+    const { receiverId, content } = req.body;
+    
+    try {
+        // Проверяем, что пользователи друзья
+        const friendship = await prisma.friendRequest.findFirst({
+            where: {
+                OR: [
+                    { senderId: req.user.userId, receiverId, status: 'ACCEPTED' },
+                    { senderId: receiverId, receiverId: req.user.userId, status: 'ACCEPTED' }
+                ]
+            }
+        });
+        
+        if (!friendship) {
+            return res.status(403).json({ error: "Вы не друзья" });
+        }
+        
+        const message = await prisma.directMessage.create({
+            data: {
+                content,
+                senderId: req.user.userId,
+                receiverId
+            }
+        });
+        
+        res.json(message);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "Ошибка отправки сообщения" });
+    }
+});
+
+app.get('/api/dm/messages/:friendId', auth, async (req, res) => {
+    const { friendId } = req.params;
+    
+    try {
+        const messages = await prisma.directMessage.findMany({
+            where: {
+                OR: [
+                    { senderId: req.user.userId, receiverId: friendId },
+                    { senderId: friendId, receiverId: req.user.userId }
+                ]
+            },
+            orderBy: { createdAt: 'asc' },
+            take: 100
+        });
+        
+        res.json(messages);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "Ошибка загрузки сообщений" });
+    }
+});
+
+// --- API: ПРИГЛАШЕНИЯ НА СЕРВЕРЫ ---
+
 app.post('/api/servers/create', auth, async (req, res) => {
     const { name } = req.body;
     
+    console.log('🏢 Получен запрос на создание сервера:', { userId: req.user.userId, name });
+    
     if (!name || name.trim().length === 0) {
+        console.log('❌ Название сервера пустое');
         return res.status(400).json({ error: "Название сервера не может быть пустым" });
     }
     
     try {
+        console.log('✅ Создаю сервер...');
+        
         const server = await prisma.server.create({
             data: {
                 name: name.trim(),
@@ -262,10 +354,11 @@ app.post('/api/servers/create', auth, async (req, res) => {
             }
         });
         
+        console.log('✅ Сервер создан:', server.id, server.name);
         res.json(server);
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: "Ошибка создания сервера" });
+        console.error('❌ Ошибка создания сервера:', e);
+        res.status(500).json({ error: "Ошибка создания сервера: " + e.message });
     }
 });
 
@@ -430,6 +523,26 @@ io.on('connection', (socket) => {
             });
             io.to(channelId).emit('new-message', msg);
         } catch (e) { console.error(e); }
+    });
+
+    // Отправка прямого сообщения
+    socket.on('send-dm', async ({ content, receiverId, token }) => {
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            const msg = await prisma.directMessage.create({
+                data: { content, senderId: decoded.userId, receiverId }
+            });
+            
+            // Отправляем обоим пользователям
+            const dmRoom = [decoded.userId, receiverId].sort().join('-');
+            io.to(dmRoom).emit('new-dm', { ...msg, senderId: decoded.userId });
+        } catch (e) { console.error(e); }
+    });
+
+    // Присоединение к DM комнате
+    socket.on('join-dm', ({ userId, friendId }) => {
+        const dmRoom = [userId, friendId].sort().join('-');
+        socket.join(dmRoom);
     });
 
     // --- ГОЛОС (WebRTC Signaling) ---
