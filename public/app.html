@@ -524,7 +524,11 @@
                 state.inCall = true;
                 
                 // Добавляем себя в список
-                addAudioBox(stream, state.user.username, state.user.avatar, true);
+                addAudioBox(stream, state.user.username, state.user.avatar, {
+                    isMe: true,
+                    userId: state.user.id,
+                    elementId: 'me'
+                });
                 document.getElementById('voice-status').innerText = 'В канале: ' + state.activeChannel.name;
 
                 socket.emit('join-voice', { channelId, userId: state.user.id });
@@ -580,7 +584,11 @@
                 state.myStream = stream;
                 state.inCall = true;
                 
-                addAudioBox(stream, state.user.username, state.user.avatar, true);
+                addAudioBox(stream, state.user.username, state.user.avatar, {
+                    isMe: true,
+                    userId: state.user.id,
+                    elementId: 'me'
+                });
                 document.getElementById('voice-status').innerText = 'Звонок с ' + state.activeFriend.username;
 
                 socket.emit('join-voice', { channelId: dmVoiceChannel, userId: state.user.id });
@@ -638,7 +646,10 @@
             });
             peer.on('stream', remoteStream => {
                 if(userInfo) {
-                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, false);
+                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, {
+                        userId: userInfo.userId,
+                        elementId: userToSignal
+                    });
                 }
             });
             return peer;
@@ -659,16 +670,20 @@
             });
             peer.on('stream', remoteStream => {
                 if(userInfo) {
-                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, false);
+                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, {
+                        userId: userInfo.userId,
+                        elementId: callerID
+                    });
                 }
             });
             peer.signal(incomingSignal);
             return peer;
         }
 
-        function addAudioBox(stream, username, avatar, isMe = false) {
+        function addAudioBox(stream, username, avatar, options = {}) {
             const grid = document.getElementById('video-grid');
-            const id = isMe ? 'me' : Date.now();
+            const { isMe = false, userId, elementId } = options;
+            const id = elementId || (isMe ? 'me' : Date.now());
             
             // Проверяем, не добавлен ли уже этот пользователь
             if(document.getElementById(`audio-${id}`)) return;
@@ -685,7 +700,30 @@
                 const audio = document.createElement('audio');
                 audio.srcObject = stream;
                 audio.autoplay = true;
+                const storedVolume = userId ? parseFloat(localStorage.getItem(`volume:${userId}`)) : NaN;
+                audio.volume = Number.isFinite(storedVolume) ? storedVolume : 1;
                 div.appendChild(audio);
+
+                const volumeWrapper = document.createElement('label');
+                volumeWrapper.className = "mt-3 w-full text-xs text-gray-400 flex flex-col gap-1";
+                volumeWrapper.innerHTML = '<span>Громкость</span>';
+
+                const volumeInput = document.createElement('input');
+                volumeInput.type = 'range';
+                volumeInput.min = '0';
+                volumeInput.max = '1';
+                volumeInput.step = '0.01';
+                volumeInput.value = audio.volume.toString();
+                volumeInput.addEventListener('input', (event) => {
+                    const value = parseFloat(event.target.value);
+                    audio.volume = value;
+                    if(userId) {
+                        localStorage.setItem(`volume:${userId}`, value.toString());
+                    }
+                });
+
+                volumeWrapper.appendChild(volumeInput);
+                div.appendChild(volumeWrapper);
             }
             
             grid.appendChild(div);
