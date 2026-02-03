@@ -607,7 +607,52 @@ app.post('/api/invites/join', auth, async (req, res) => {
 // --- SOCKET.IO: ЧАТ И ГОЛОС ---
 
 // Кто в какой комнате (для голоса)
-const voiceRooms = {}; // { channelId: [{ socketId, userId, username, avatar }, ...] }
+const voiceRooms = new Map(); // Map<channelId, Map<userId, { socketId, userId, username, avatar }>>
+
+const getVoiceRoom = (channelId) => {
+    if (!voiceRooms.has(channelId)) {
+        voiceRooms.set(channelId, new Map());
+    }
+    return voiceRooms.get(channelId);
+};
+
+const getVoiceUsersList = (room) => (
+    Array.from(room.values()).map(u => ({
+        userId: u.userId,
+        username: u.username,
+        avatar: u.avatar
+    }))
+);
+
+const notifyVoiceUsersUpdated = (channelId, room) => {
+    io.emit('voice-users-updated', {
+        channelId,
+        users: getVoiceUsersList(room)
+    });
+};
+
+const removeVoiceUserFromChannel = (channelId, userId) => {
+    const room = voiceRooms.get(channelId);
+    if (!room) return null;
+
+    const existingUser = room.get(userId);
+    if (!existingUser) return null;
+
+    room.delete(userId);
+
+    const remainingUsers = Array.from(room.values());
+    remainingUsers.forEach(remainingUser => {
+        io.to(remainingUser.socketId).emit('user-left', existingUser.socketId);
+    });
+
+    notifyVoiceUsersUpdated(channelId, room);
+
+    if (room.size === 0) {
+        voiceRooms.delete(channelId);
+    }
+
+    return existingUser;
+};
 
 io.on('connection', (socket) => {
     console.log('User connected', socket.id);
@@ -661,10 +706,10 @@ io.on('connection', (socket) => {
             
             if (!user) return;
             
-            if (!voiceRooms[channelId]) voiceRooms[channelId] = [];
+            const room = getVoiceRoom(channelId);
             
             // Получаем список пользователей уже в комнате (без текущего)
-            const usersInRoom = voiceRooms[channelId].map(u => ({
+            const usersInRoom = Array.from(room.values()).map(u => ({
                 socketId: u.socketId,
                 userId: u.userId,
                 username: u.username,
@@ -674,23 +719,22 @@ io.on('connection', (socket) => {
             // Отправляем новому пользователю список тех, кто уже в комнате
             socket.emit('all-users', usersInRoom);
             
+            // Удаляем возможные старые записи этого пользователя
+            removeVoiceUserFromChannel(channelId, userId);
+
             // Добавляем нового пользователя в комнату
-            voiceRooms[channelId].push({
+            room.set(user.id, {
                 socketId: socket.id,
                 userId: user.id,
                 username: user.username,
                 avatar: user.avatar
             });
+
+            socket.data.userId = user.id;
+            socket.data.voiceChannelId = channelId;
             
             // Оповещаем всех в канале о новом пользователе
-            io.emit('voice-users-updated', {
-                channelId,
-                users: voiceRooms[channelId].map(u => ({
-                    userId: u.userId,
-                    username: u.username,
-                    avatar: u.avatar
-                }))
-            });
+            notifyVoiceUsersUpdated(channelId, room);
             
             console.log(`✅ ${user.username} присоединился к голосовому каналу ${channelId}`);
         } catch (e) {
@@ -717,59 +761,33 @@ io.on('connection', (socket) => {
 
     // Выход из голосового канала
     socket.on('leave-voice', ({ channelId }) => {
-        if (voiceRooms[channelId]) {
-            const userIndex = voiceRooms[channelId].findIndex(u => u.socketId === socket.id);
-            if (userIndex !== -1) {
-                const user = voiceRooms[channelId][userIndex];
-                voiceRooms[channelId] = voiceRooms[channelId].filter(u => u.socketId !== socket.id);
-                
-                // Говорим остальным убрать этого пользователя
-                voiceRooms[channelId].forEach(remainingUser => {
-                    io.to(remainingUser.socketId).emit('user-left', socket.id);
-                });
-                
-                // Обновляем список активных пользователей
-                io.emit('voice-users-updated', {
-                    channelId,
-                    users: voiceRooms[channelId].map(u => ({
-                        userId: u.userId,
-                        username: u.username,
-                        avatar: u.avatar
-                    }))
-                });
-                
-                console.log(`❌ ${user.username} покинул голосовой канал ${channelId}`);
-            }
+        const userId = socket.data.userId;
+        if (!userId) return;
+
+        const removedUser = removeVoiceUserFromChannel(channelId, userId);
+        if (removedUser) {
+            console.log(`❌ ${removedUser.username} покинул голосовой канал ${channelId}`);
         }
     });
 
     // Выход
     socket.on('disconnect', () => {
         // Удаляем из голосовых комнат
-        for (const [channelId, users] of Object.entries(voiceRooms)) {
-            const userIndex = users.findIndex(u => u.socketId === socket.id);
-            if (userIndex !== -1) {
-                const user = users[userIndex];
-                voiceRooms[channelId] = users.filter(u => u.socketId !== socket.id);
-                
-                // Говорим остальным убрать этого пользователя
-                users.forEach(remainingUser => {
-                    if (remainingUser.socketId !== socket.id) {
-                        io.to(remainingUser.socketId).emit('user-left', socket.id);
+        const userId = socket.data.userId;
+        for (const [channelId, room] of voiceRooms.entries()) {
+            if (userId && room.has(userId)) {
+                const removedUser = removeVoiceUserFromChannel(channelId, userId);
+                if (removedUser) {
+                    console.log(`❌ ${removedUser.username} покинул голосовой канал ${channelId}`);
+                }
+            } else {
+                const staleUser = Array.from(room.values()).find(u => u.socketId === socket.id);
+                if (staleUser) {
+                    const removedUser = removeVoiceUserFromChannel(channelId, staleUser.userId);
+                    if (removedUser) {
+                        console.log(`❌ ${removedUser.username} покинул голосовой канал ${channelId}`);
                     }
-                });
-                
-                // Обновляем список активных пользователей
-                io.emit('voice-users-updated', {
-                    channelId,
-                    users: voiceRooms[channelId].map(u => ({
-                        userId: u.userId,
-                        username: u.username,
-                        avatar: u.avatar
-                    }))
-                });
-                
-                console.log(`❌ ${user.username} покинул голосовой канал ${channelId}`);
+                }
             }
         }
     });
