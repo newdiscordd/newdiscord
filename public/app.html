@@ -217,7 +217,8 @@
             peers: [], 
             myStream: null,
             inCall: false,
-            voiceUsers: {} // { channelId: [users] }
+            voiceUsers: {}, // { channelId: [users] }
+            dmVoiceChannel: null
         };
         const socket = io();
 
@@ -517,6 +518,7 @@
         const peersRef = [];
 
         function startVoice(channelId) {
+            state.dmVoiceChannel = null;
             navigator.mediaDevices.getUserMedia({ video: false, audio: true }).then(stream => {
                 state.myStream = stream;
                 state.inCall = true;
@@ -572,6 +574,7 @@
             document.getElementById('voice-view').classList.remove('hidden');
             
             const dmVoiceChannel = `dm-${[state.user.id, state.activeFriend.id].sort().join('-')}`;
+            state.dmVoiceChannel = dmVoiceChannel;
             
             navigator.mediaDevices.getUserMedia({ video: false, audio: true }).then(stream => {
                 state.myStream = stream;
@@ -689,12 +692,17 @@
             lucide.createIcons();
         }
 
-        function leaveVoice() {
+        function leaveVoice(options = {}) {
+            const channelId = state.activeChannel?.id || state.dmVoiceChannel;
+            if (!options.skipEmit && channelId) {
+                socket.emit('leave-voice', { channelId });
+            }
             if(state.myStream) {
                 state.myStream.getTracks().forEach(t => t.stop());
                 state.myStream = null;
             }
             state.inCall = false;
+            state.dmVoiceChannel = null;
             socket.off('all-users');
             socket.off('user-joined');
             socket.off('receiving-returned-signal');
@@ -715,6 +723,14 @@
                 openDirectMessage(state.activeFriend.id);
             }
         }
+
+        window.addEventListener('beforeunload', () => {
+            const channelId = state.activeChannel?.id || state.dmVoiceChannel;
+            if (channelId) {
+                socket.emit('leave-voice', { channelId });
+            }
+            leaveVoice({ skipEmit: true });
+        });
 
         let searchTimeout;
         async function searchUsers(query) {
