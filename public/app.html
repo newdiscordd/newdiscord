@@ -228,6 +228,9 @@
             placeholderStream: null,
             placeholderVideoTrack: null,
             screenStream: null,
+            screenAudioContext: null,
+            screenAudioDestination: null,
+            screenAudioTrack: null,
             inCall: false,
             voiceUsers: {}, // { channelId: [users] }
             dmVoiceChannel: null
@@ -831,9 +834,20 @@
                 state.myStream.addTrack(screenVideoTrack);
 
                 if (screenAudioTrack && state.micTrack) {
-                    peersRef.forEach(({ peer }) => peer.replaceTrack(state.micTrack, screenAudioTrack, state.myStream));
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    const audioContext = new AudioContextClass();
+                    const destination = audioContext.createMediaStreamDestination();
+                    const micSource = audioContext.createMediaStreamSource(new MediaStream([state.micTrack]));
+                    const screenSource = audioContext.createMediaStreamSource(new MediaStream([screenAudioTrack]));
+                    micSource.connect(destination);
+                    screenSource.connect(destination);
+                    const mixedTrack = destination.stream.getAudioTracks()[0];
+                    state.screenAudioContext = audioContext;
+                    state.screenAudioDestination = destination;
+                    state.screenAudioTrack = mixedTrack;
+                    peersRef.forEach(({ peer }) => peer.replaceTrack(state.micTrack, mixedTrack, state.myStream));
                     state.myStream.removeTrack(state.micTrack);
-                    state.myStream.addTrack(screenAudioTrack);
+                    state.myStream.addTrack(mixedTrack);
                 }
 
                 screenVideoTrack.onended = () => stopScreenShare();
@@ -851,7 +865,6 @@
             if (!state.screenStream) return;
 
             const screenVideoTrack = state.screenStream.getVideoTracks()[0];
-            const screenAudioTrack = state.screenStream.getAudioTracks()[0] || null;
 
             if (screenVideoTrack && state.placeholderVideoTrack) {
                 peersRef.forEach(({ peer }) => peer.replaceTrack(screenVideoTrack, state.placeholderVideoTrack, state.myStream));
@@ -859,11 +872,19 @@
                 state.myStream.addTrack(state.placeholderVideoTrack);
             }
 
-            if (screenAudioTrack && state.micTrack) {
-                peersRef.forEach(({ peer }) => peer.replaceTrack(screenAudioTrack, state.micTrack, state.myStream));
-                state.myStream.removeTrack(screenAudioTrack);
+            if (state.screenAudioTrack && state.micTrack) {
+                peersRef.forEach(({ peer }) => peer.replaceTrack(state.screenAudioTrack, state.micTrack, state.myStream));
+                state.myStream.removeTrack(state.screenAudioTrack);
                 state.myStream.addTrack(state.micTrack);
+                state.screenAudioTrack.stop();
+                state.screenAudioTrack = null;
             }
+
+            if (state.screenAudioContext) {
+                state.screenAudioContext.close();
+                state.screenAudioContext = null;
+            }
+            state.screenAudioDestination = null;
 
             state.screenStream.getTracks().forEach(track => track.stop());
             state.screenStream = null;
