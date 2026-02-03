@@ -904,14 +904,20 @@
             document.getElementById('video-grid').innerHTML = '';
             document.getElementById('voice-view').classList.add('hidden');
             
-            // Перенаправляем в текстовый канал
-            if(state.activeServer && state.activeChannel) {
-                // Находим первый текстовый канал
+            // Перенаправляем в текстовый канал без повторного joinChannel
+            if (state.activeServer) {
                 const textChannel = state.activeServer.channels.find(c => c.type === 'TEXT');
-                if(textChannel) {
-                    joinChannel(textChannel.id, 'TEXT');
+                if (textChannel) {
+                    state.activeChannel = textChannel;
+                    document.getElementById('channel-header').innerText = '# ' + textChannel.name;
+                    document.getElementById('empty-view').classList.add('hidden');
+                    document.getElementById('chat-view').classList.remove('hidden');
+                    document.getElementById('voice-view').classList.add('hidden');
+                    renderChannelsList();
+                    socket.emit('join-text', textChannel.id);
+                    loadMessages(textChannel.id);
                 }
-            } else if(state.activeFriend) {
+            } else if (state.activeFriend) {
                 openDirectMessage(state.activeFriend.id);
             }
         }
