@@ -96,15 +96,8 @@ const getPagination = (req, { defaultPageSize = 20, maxPageSize = 100 } = {}) =>
 
 app.get('/api/data', auth, async (req, res) => {
     try {
-        const [user, servers, friendRequests] = await prisma.$transaction([
+        const [user, friendRequests] = await prisma.$transaction([
             prisma.user.findUnique({ where: { id: req.user.userId } }),
-            prisma.server.findMany({
-                where: { members: { some: { userId: req.user.userId } } },
-                include: {
-                    channels: true,
-                    members: { include: { user: true } }
-                }
-            }),
             prisma.friendRequest.findMany({
                 where: {
                     OR: [
@@ -120,7 +113,7 @@ app.get('/api/data', auth, async (req, res) => {
             })
         ]);
 
-        res.json({ user, servers, friendRequests });
+        res.json({ user, friendRequests });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: "Ошибка загрузки данных" });
@@ -591,9 +584,10 @@ app.post('/api/invites/join', auth, async (req, res) => {
         // Возвращаем обновленные данные
         const servers = await prisma.server.findMany({
             where: { members: { some: { userId: req.user.userId } } },
-            include: { 
-                channels: true,
-                members: { include: { user: true } }
+            select: {
+                id: true,
+                name: true,
+                ownerId: true
             }
         });
         
