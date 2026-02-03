@@ -575,8 +575,7 @@
                 state.inCall = true;
                 
                 // Добавляем себя в список
-                addAudioBox(state.myStream, state.user.username, state.user.avatar, true);
-                addAudioBox(stream, state.user.username, state.user.avatar, {
+                addAudioBox(state.myStream, state.user.username, state.user.avatar, {
                     isMe: true,
                     userId: state.user.id,
                     elementId: 'me'
@@ -638,8 +637,7 @@
                 state.myStream = new MediaStream([state.micTrack, state.placeholderVideoTrack]);
                 state.inCall = true;
                 
-                addAudioBox(state.myStream, state.user.username, state.user.avatar, true);
-                addAudioBox(stream, state.user.username, state.user.avatar, {
+                addAudioBox(state.myStream, state.user.username, state.user.avatar, {
                     isMe: true,
                     userId: state.user.id,
                     elementId: 'me'
