@@ -82,34 +82,106 @@ const auth = (req, res, next) => {
     } catch { res.status(401).json({ error: "Unauthorized" }); }
 };
 
+const getPagination = (req, { defaultPageSize = 20, maxPageSize = 100 } = {}) => {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageSize = Math.min(
+        Math.max(parseInt(req.query.pageSize, 10) || defaultPageSize, 1),
+        maxPageSize
+    );
+    const skip = (page - 1) * pageSize;
+    return { page, pageSize, skip };
+};
+
 // --- API: ДАННЫЕ ---
 
-app.get('/api/data', auth, async (req, res) => {
-    // Грузим всё сразу: сервера юзера, каналы, участников
+app.get('/api/servers', auth, async (req, res) => {
     const servers = await prisma.server.findMany({
         where: { members: { some: { userId: req.user.userId } } },
-        include: { 
-            channels: true,
-            members: { include: { user: true } }
+        select: {
+            id: true,
+            name: true,
+            ownerId: true
         }
     });
-    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
-    
-    // Получаем друзей (принятые заявки)
-    const friendRequests = await prisma.friendRequest.findMany({
-        where: {
-            OR: [
-                { senderId: req.user.userId },
-                { receiverId: req.user.userId }
-            ]
-        },
-        include: {
-            sender: true,
-            receiver: true
-        }
+    res.json(servers);
+});
+
+app.get('/api/channels/:serverId', auth, async (req, res) => {
+    const { serverId } = req.params;
+    const member = await prisma.member.findFirst({
+        where: { serverId, userId: req.user.userId }
     });
-    
-    res.json({ servers, user, friendRequests });
+
+    if (!member) {
+        return res.status(403).json({ error: "Нет доступа к серверу" });
+    }
+
+    const channels = await prisma.channel.findMany({
+        where: { serverId },
+        orderBy: { name: 'asc' }
+    });
+
+    res.json(channels);
+});
+
+app.get('/api/members/:serverId', auth, async (req, res) => {
+    const { serverId } = req.params;
+    const member = await prisma.member.findFirst({
+        where: { serverId, userId: req.user.userId }
+    });
+
+    if (!member) {
+        return res.status(403).json({ error: "Нет доступа к серверу" });
+    }
+
+    const { page, pageSize, skip } = getPagination(req, { defaultPageSize: 25 });
+    const [members, total] = await prisma.$transaction([
+        prisma.member.findMany({
+            where: { serverId },
+            include: { user: true },
+            orderBy: { user: { username: 'asc' } },
+            skip,
+            take: pageSize
+        }),
+        prisma.member.count({ where: { serverId } })
+    ]);
+
+    res.json({
+        items: members,
+        page,
+        pageSize,
+        total
+    });
+});
+
+app.get('/api/friends/requests', auth, async (req, res) => {
+    const { page, pageSize, skip } = getPagination(req, { defaultPageSize: 25 });
+    const where = {
+        OR: [
+            { senderId: req.user.userId },
+            { receiverId: req.user.userId }
+        ]
+    };
+    const [requests, total] = await prisma.$transaction([
+        prisma.friendRequest.findMany({
+            where,
+            include: {
+                sender: true,
+                receiver: true
+            },
+            orderBy: { createdAt: 'desc' },
+            skip,
+            take: pageSize
+        }),
+        prisma.friendRequest.count({ where })
+    ]);
+
+    res.json({
+        items: requests,
+        page,
+        pageSize,
+        total
+    });
 });
 
 app.get('/api/messages/:channelId', auth, async (req, res) => {

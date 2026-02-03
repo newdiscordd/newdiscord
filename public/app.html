@@ -187,10 +187,18 @@
                 <div class="text-green-400 font-bold text-xl mb-2">Голосовой звонок</div>
                 <div id="voice-status" class="text-gray-400"></div>
             </div>
+            <div id="screen-share-preview" class="hidden w-full max-w-4xl mb-4">
+                <video id="screen-video" class="w-full rounded-lg border border-[#404249]" autoplay playsinline muted></video>
+            </div>
             <div id="video-grid" class="grid grid-cols-2 gap-4 mb-4"></div>
-            <button onclick="leaveVoice()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-bold">
-                Завершить звонок
-            </button>
+            <div class="flex gap-3">
+                <button id="screen-share-btn" onclick="startScreenShare()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-6 py-3 rounded-full font-bold">
+                    Демонстрация экрана
+                </button>
+                <button onclick="leaveVoice()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-bold">
+                    Завершить звонок
+                </button>
+            </div>
         </div>
 
         <div id="empty-view" class="flex-1 flex items-center justify-center">
@@ -216,8 +224,13 @@
             friendRequests: [],
             peers: [], 
             myStream: null,
+            micTrack: null,
+            placeholderStream: null,
+            placeholderVideoTrack: null,
+            screenStream: null,
             inCall: false,
-            voiceUsers: {} // { channelId: [users] }
+            voiceUsers: {}, // { channelId: [users] }
+            dmVoiceChannel: null
         };
         const socket = io();
 
@@ -554,16 +567,56 @@
         const peersRef = [];
 
         function startVoice(channelId) {
+            state.dmVoiceChannel = null;
             navigator.mediaDevices.getUserMedia({ video: false, audio: true }).then(stream => {
-                state.myStream = stream;
+                state.micTrack = stream.getAudioTracks()[0];
+                state.placeholderVideoTrack = createPlaceholderVideoTrack();
+                state.myStream = new MediaStream([state.micTrack, state.placeholderVideoTrack]);
                 state.inCall = true;
                 
                 // Добавляем себя в список
-                addAudioBox(stream, state.user.username, state.user.avatar, true);
+                addAudioBox(state.myStream, state.user.username, state.user.avatar, true);
+                addAudioBox(stream, state.user.username, state.user.avatar, {
+                    isMe: true,
+                    userId: state.user.id,
+                    elementId: 'me'
+                });
                 document.getElementById('voice-status').innerText = 'В канале: ' + state.activeChannel.name;
 
                 socket.emit('join-voice', { channelId, userId: state.user.id });
 
+                socket.on('all-users', users => {
+                    users.forEach(userInfo => {
+                        const peer = createPeer(userInfo.socketId, socket.id, state.myStream, userInfo);
+                        peersRef.push({ peerID: userInfo.socketId, peer, userInfo });
+                    });
+                });
+
+                socket.on('user-joined', payload => {
+                    const peer = addPeer(payload.signal, payload.callerID, state.myStream, payload.userInfo);
+                    peersRef.push({ peerID: payload.callerID, peer, userInfo: payload.userInfo });
+                });
+
+                socket.on('receiving-returned-signal', payload => {
+                    const item = peersRef.find(p => p.peerID === payload.id);
+                    if(item) {
+                        item.peer.signal(payload.signal);
+                        if(payload.userInfo) {
+                            item.userInfo = payload.userInfo;
+                        }
+                    }
+                });
+
+                socket.on('user-left', id => {
+                    const peerObj = peersRef.find(p => p.peerID === id);
+                    if(peerObj) {
+                        peerObj.peer.destroy();
+                        const index = peersRef.findIndex(p => p.peerID === id);
+                        if(index !== -1) peersRef.splice(index, 1);
+                    }
+                    const el = document.getElementById(`audio-${id}`);
+                    if(el) el.remove();
+                });
             }).catch(err => {
                 alert('Не удалось получить доступ к микрофону: ' + err.message);
             });
@@ -577,16 +630,56 @@
             document.getElementById('voice-view').classList.remove('hidden');
             
             const dmVoiceChannel = `dm-${[state.user.id, state.activeFriend.id].sort().join('-')}`;
+            state.dmVoiceChannel = dmVoiceChannel;
             
             navigator.mediaDevices.getUserMedia({ video: false, audio: true }).then(stream => {
-                state.myStream = stream;
+                state.micTrack = stream.getAudioTracks()[0];
+                state.placeholderVideoTrack = createPlaceholderVideoTrack();
+                state.myStream = new MediaStream([state.micTrack, state.placeholderVideoTrack]);
                 state.inCall = true;
                 
-                addAudioBox(stream, state.user.username, state.user.avatar, true);
+                addAudioBox(state.myStream, state.user.username, state.user.avatar, true);
+                addAudioBox(stream, state.user.username, state.user.avatar, {
+                    isMe: true,
+                    userId: state.user.id,
+                    elementId: 'me'
+                });
                 document.getElementById('voice-status').innerText = 'Звонок с ' + state.activeFriend.username;
 
                 socket.emit('join-voice', { channelId: dmVoiceChannel, userId: state.user.id });
 
+                socket.on('all-users', users => {
+                    users.forEach(userInfo => {
+                        const peer = createPeer(userInfo.socketId, socket.id, state.myStream, userInfo);
+                        peersRef.push({ peerID: userInfo.socketId, peer, userInfo });
+                    });
+                });
+
+                socket.on('user-joined', payload => {
+                    const peer = addPeer(payload.signal, payload.callerID, state.myStream, payload.userInfo);
+                    peersRef.push({ peerID: payload.callerID, peer, userInfo: payload.userInfo });
+                });
+
+                socket.on('receiving-returned-signal', payload => {
+                    const item = peersRef.find(p => p.peerID === payload.id);
+                    if(item) {
+                        item.peer.signal(payload.signal);
+                        if(payload.userInfo) {
+                            item.userInfo = payload.userInfo;
+                        }
+                    }
+                });
+
+                socket.on('user-left', id => {
+                    const peerObj = peersRef.find(p => p.peerID === id);
+                    if(peerObj) {
+                        peerObj.peer.destroy();
+                        const index = peersRef.findIndex(p => p.peerID === id);
+                        if(index !== -1) peersRef.splice(index, 1);
+                    }
+                    const el = document.getElementById(`audio-${id}`);
+                    if(el) el.remove();
+                });
             }).catch(err => {
                 alert('Не удалось получить доступ к микрофону: ' + err.message);
             });
@@ -608,7 +701,10 @@
             });
             peer.on('stream', remoteStream => {
                 if(userInfo) {
-                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, false);
+                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, {
+                        userId: userInfo.userId,
+                        elementId: userToSignal
+                    });
                 }
             });
             return peer;
@@ -629,45 +725,183 @@
             });
             peer.on('stream', remoteStream => {
                 if(userInfo) {
-                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, false);
+                    addAudioBox(remoteStream, userInfo.username, userInfo.avatar, {
+                        userId: userInfo.userId,
+                        elementId: callerID
+                    });
                 }
             });
             peer.signal(incomingSignal);
             return peer;
         }
 
-        function addAudioBox(stream, username, avatar, isMe = false) {
+        function addAudioBox(stream, username, avatar, options = {}) {
             const grid = document.getElementById('video-grid');
-            const id = isMe ? 'me' : Date.now();
+            const { isMe = false, userId, elementId } = options;
+            const id = elementId || (isMe ? 'me' : Date.now());
             
             // Проверяем, не добавлен ли уже этот пользователь
             if(document.getElementById(`audio-${id}`)) return;
             
             const div = document.createElement('div');
             div.id = `audio-${id}`;
-            div.className = "bg-[#1E1F22] p-6 rounded-lg flex flex-col items-center justify-center border-2 border-green-500";
+            div.className = "bg-[#1E1F22] p-6 rounded-lg flex flex-col items-center justify-center border-2 border-green-500 gap-3";
             div.innerHTML = `
                 <img src="${avatar}" class="w-20 h-20 rounded-full mb-3 border-2 border-[#5865F2]">
                 <span class="font-bold text-white">${username}</span>
             `;
             
+            const videoTracks = stream.getVideoTracks();
+            if (videoTracks.length > 0) {
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.muted = true;
+                video.className = "w-full rounded border border-[#404249]";
+                if (videoTracks.every(track => !track.enabled)) {
+                    video.classList.add('hidden');
+                }
+                div.appendChild(video);
+            }
+
             if(!isMe) {
                 const audio = document.createElement('audio');
                 audio.srcObject = stream;
                 audio.autoplay = true;
+                const storedVolume = userId ? parseFloat(localStorage.getItem(`volume:${userId}`)) : NaN;
+                audio.volume = Number.isFinite(storedVolume) ? storedVolume : 1;
                 div.appendChild(audio);
+
+                const volumeWrapper = document.createElement('label');
+                volumeWrapper.className = "mt-3 w-full text-xs text-gray-400 flex flex-col gap-1";
+                volumeWrapper.innerHTML = '<span>Громкость</span>';
+
+                const volumeInput = document.createElement('input');
+                volumeInput.type = 'range';
+                volumeInput.min = '0';
+                volumeInput.max = '1';
+                volumeInput.step = '0.01';
+                volumeInput.value = audio.volume.toString();
+                volumeInput.addEventListener('input', (event) => {
+                    const value = parseFloat(event.target.value);
+                    audio.volume = value;
+                    if(userId) {
+                        localStorage.setItem(`volume:${userId}`, value.toString());
+                    }
+                });
+
+                volumeWrapper.appendChild(volumeInput);
+                div.appendChild(volumeWrapper);
             }
             
             grid.appendChild(div);
             lucide.createIcons();
         }
 
+        function createPlaceholderVideoTrack() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 360;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#1E1F22';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            state.placeholderStream = canvas.captureStream(5);
+            const track = state.placeholderStream.getVideoTracks()[0];
+            track.enabled = false;
+            return track;
+        }
+
+        async function startScreenShare() {
+            if (!state.myStream || !state.inCall) return;
+            if (state.screenStream) {
+                stopScreenShare();
+                return;
+            }
+
+            try {
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                state.screenStream = screenStream;
+                const screenVideoTrack = screenStream.getVideoTracks()[0];
+                const screenAudioTrack = screenStream.getAudioTracks()[0] || null;
+
+                const oldVideoTrack = state.myStream.getVideoTracks()[0];
+                if (oldVideoTrack) {
+                    peersRef.forEach(({ peer }) => peer.replaceTrack(oldVideoTrack, screenVideoTrack, state.myStream));
+                    state.myStream.removeTrack(oldVideoTrack);
+                }
+                state.myStream.addTrack(screenVideoTrack);
+
+                if (screenAudioTrack && state.micTrack) {
+                    peersRef.forEach(({ peer }) => peer.replaceTrack(state.micTrack, screenAudioTrack, state.myStream));
+                    state.myStream.removeTrack(state.micTrack);
+                    state.myStream.addTrack(screenAudioTrack);
+                }
+
+                screenVideoTrack.onended = () => stopScreenShare();
+
+                const screenPreview = document.getElementById('screen-video');
+                screenPreview.srcObject = screenStream;
+                document.getElementById('screen-share-preview').classList.remove('hidden');
+                updateScreenShareButton(true);
+            } catch (err) {
+                alert('Не удалось начать демонстрацию экрана: ' + err.message);
+            }
+        }
+
+        function stopScreenShare() {
+            if (!state.screenStream) return;
+
+            const screenVideoTrack = state.screenStream.getVideoTracks()[0];
+            const screenAudioTrack = state.screenStream.getAudioTracks()[0] || null;
+
+            if (screenVideoTrack && state.placeholderVideoTrack) {
+                peersRef.forEach(({ peer }) => peer.replaceTrack(screenVideoTrack, state.placeholderVideoTrack, state.myStream));
+                state.myStream.removeTrack(screenVideoTrack);
+                state.myStream.addTrack(state.placeholderVideoTrack);
+            }
+
+            if (screenAudioTrack && state.micTrack) {
+                peersRef.forEach(({ peer }) => peer.replaceTrack(screenAudioTrack, state.micTrack, state.myStream));
+                state.myStream.removeTrack(screenAudioTrack);
+                state.myStream.addTrack(state.micTrack);
+            }
+
+            state.screenStream.getTracks().forEach(track => track.stop());
+            state.screenStream = null;
+
+            const screenPreview = document.getElementById('screen-video');
+            screenPreview.srcObject = null;
+            document.getElementById('screen-share-preview').classList.add('hidden');
+            updateScreenShareButton(false);
+        }
+
+        function updateScreenShareButton(isSharing) {
+            const button = document.getElementById('screen-share-btn');
+            if (!button) return;
+            button.textContent = isSharing ? 'Остановить демонстрацию' : 'Демонстрация экрана';
+        }
+
         function leaveVoice() {
+            stopScreenShare();
+        function leaveVoice(options = {}) {
+            const channelId = state.activeChannel?.id || state.dmVoiceChannel;
+            if (!options.skipEmit && channelId) {
+                socket.emit('leave-voice', { channelId });
+            }
             if(state.myStream) {
                 state.myStream.getTracks().forEach(t => t.stop());
                 state.myStream = null;
             }
+            state.micTrack = null;
+            state.placeholderStream = null;
+            state.placeholderVideoTrack = null;
             state.inCall = false;
+            state.dmVoiceChannel = null;
+            socket.off('all-users');
+            socket.off('user-joined');
+            socket.off('receiving-returned-signal');
+            socket.off('user-left');
             peersRef.forEach(p => p.peer.destroy());
             peersRef.length = 0;
             document.getElementById('video-grid').innerHTML = '';
@@ -684,6 +918,14 @@
                 openDirectMessage(state.activeFriend.id);
             }
         }
+
+        window.addEventListener('beforeunload', () => {
+            const channelId = state.activeChannel?.id || state.dmVoiceChannel;
+            if (channelId) {
+                socket.emit('leave-voice', { channelId });
+            }
+            leaveVoice({ skipEmit: true });
+        });
 
         let searchTimeout;
         async function searchUsers(query) {
