@@ -2719,9 +2719,9 @@ app.get('/', (req, res) => {
 
 initializeDatabase().then(() => {
     server.listen(PORT, () => {
-        console.log(\`🚀 Discord Clone запущен на порту \${PORT}\`);
-        console.log(\`📡 WebSocket готов\`);
-        console.log(\`🎤 Голосовой чат включен\`);
+        console.log(`🚀 Discord Clone запущен на порту \${PORT}`);
+        console.log(`📡 WebSocket готов`);
+        console.log(`🎤 Голосовой чат включен`);
     });
 }).catch(err => {
     console.error('Failed to initialize:', err);
