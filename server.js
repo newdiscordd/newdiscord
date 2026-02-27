@@ -1,6 +1,6 @@
 /**
  * Discord Clone - Full Stack Server with Voice Chat
- * Часть 1: Сервер + WebRTC сигналинг
+ * ИСПРАВЛЕННАЯ ВЕРСИЯ - Часть 1: Сервер + WebRTC сигналинг
  */
 
 const express = require('express');
@@ -21,7 +21,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const BCRYPT_ROUNDS = 10;
 const DATABASE_URL = process.env.DATABASE_URL;
 
-// TURN/STUN серверы для WebRTC
 const ICE_SERVERS = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -74,9 +73,9 @@ function getVoiceRoomParticipants(channelId) {
     return Array.from(room.values());
 }
 
-function getUserVoiceChannel(odego) {
+function getUserVoiceChannel(userId) {
     for (const [channelId, room] of voiceRooms.entries()) {
-        if (room.has(odego)) {
+        if (room.has(userId)) {
             return channelId;
         }
     }
@@ -213,11 +212,11 @@ async function checkServerOwner(req, res, next) {
 // ============================================
 
 const wss = new WebSocketServer({ server });
-const clients = new Map();
-const wsUserMap = new Map();
+const clients = new Map(); // userId -> Set<WebSocket>
+const wsUserMap = new Map(); // WebSocket -> userId
 
-function sendToUser(odego, data) {
-    const sockets = clients.get(odego);
+function sendToUser(userId, data) {
+    const sockets = clients.get(userId);
     if (sockets) {
         const msg = JSON.stringify(data);
         sockets.forEach(ws => {
@@ -257,50 +256,73 @@ function broadcastToVoiceChannel(channelId, data, excludeUserId = null) {
     });
 }
 
-async function handleVoiceJoin(odego, username, channelId, ws) {
-    const currentChannel = getUserVoiceChannel(odego);
+// ============================================
+// ИСПРАВЛЕННЫЕ ГОЛОСОВЫЕ ФУНКЦИИ
+// ============================================
+
+async function handleVoiceJoin(userId, username, channelId, ws) {
+    // Сначала выходим из текущего канала, если есть
+    const currentChannel = getUserVoiceChannel(userId);
     if (currentChannel && currentChannel !== channelId) {
-        await handleVoiceLeave(odego);
+        await handleVoiceLeave(userId);
     }
     
+    // Проверяем, что это голосовой канал
     const channelResult = await pool.query('SELECT * FROM channels WHERE id = $1 AND type = $2', [channelId, 'voice']);
     if (!channelResult.rows[0]) {
-        sendToUser(odego, { type: 'VOICE_ERROR', error: 'Голосовой канал не найден' });
+        sendToUser(userId, { type: 'VOICE_ERROR', error: 'Голосовой канал не найден' });
         return;
     }
     
     const channel = channelResult.rows[0];
-    const memberResult = await pool.query('SELECT * FROM server_members WHERE server_id = $1 AND user_id = $2', [channel.server_id, odego]);
+    
+    // Проверяем членство на сервере
+    const memberResult = await pool.query('SELECT * FROM server_members WHERE server_id = $1 AND user_id = $2', [channel.server_id, userId]);
     if (!memberResult.rows[0]) {
-        sendToUser(odego, { type: 'VOICE_ERROR', error: 'Нет доступа к серверу' });
+        sendToUser(userId, { type: 'VOICE_ERROR', error: 'Нет доступа к серверу' });
         return;
     }
     
     const room = getVoiceRoom(channelId);
+    
+    // ИСПРАВЛЕНИЕ: Проверяем, не подключен ли уже этот пользователь
+    if (room.has(userId)) {
+        console.log(`[VOICE] User ${username} already in channel ${channelId}, skipping`);
+        return;
+    }
+    
+    // Получаем существующих участников ДО добавления нового
     const existingParticipants = Array.from(room.values());
     
-    room.set(odego, {
+    // ИСПРАВЛЕНИЕ: Используем userId вместо odego для консистентности
+    const participant = {
         odego: odego,
         username: username,
         muted: false,
         deafened: false
-    });
+    };
     
-    console.log(`[VOICE] ${username} joined channel ${channelId}. Participants: ${room.size}`);
+    room.set(userId, participant);
     
-    sendToUser(odego, {
+    console.log(`[VOICE] ${username} (${userId}) joined channel ${channelId}. Participants: ${room.size}`);
+    
+    // Отправляем подтверждение присоединившемуся пользователю
+    sendToUser(userId, {
         type: 'VOICE_JOINED',
         channelId: channelId,
         participants: existingParticipants,
         iceServers: ICE_SERVERS
     });
     
+    // ИСПРАВЛЕНИЕ: Уведомляем ТОЛЬКО других участников в голосовом канале
     broadcastToVoiceChannel(channelId, {
         type: 'VOICE_USER_JOINED',
         channelId: channelId,
-        user: { odego: odego, username: username, muted: false, deafened: false }
-    }, odego);
+        user: participant
+    }, odego); // исключаем самого пользователя
     
+    // ИСПРАВЛЕНИЕ: Отдельно отправляем обновление состояния для UI всем на сервере
+    // (но это НЕ должно добавлять участника повторно на клиенте)
     broadcastToServer(channel.server_id, {
         type: 'VOICE_STATE_UPDATE',
         channelId: channelId,
@@ -310,30 +332,33 @@ async function handleVoiceJoin(odego, username, channelId, ws) {
     });
 }
 
-async function handleVoiceLeave(odego) {
-    const channelId = getUserVoiceChannel(odego);
+async function handleVoiceLeave(userId) {
+    const channelId = getUserVoiceChannel(userId);
     if (!channelId) return;
     
     const room = voiceRooms.get(channelId);
     if (!room) return;
     
-    const user = room.get(odego);
+    const user = room.get(userId);
     if (!user) return;
     
-    room.delete(odego);
+    room.delete(userId);
     
-    console.log(`[VOICE] ${user.username} left channel ${channelId}. Participants: ${room.size}`);
+    console.log(`[VOICE] ${user.username} (${userId}) left channel ${channelId}. Participants: ${room.size}`);
     
+    // Очищаем пустую комнату
     if (room.size === 0) {
         voiceRooms.delete(channelId);
     }
     
+    // Уведомляем оставшихся участников голосового канала
     broadcastToVoiceChannel(channelId, {
         type: 'VOICE_USER_LEFT',
         channelId: channelId,
         odego: odego
     });
     
+    // Отправляем обновление состояния на весь сервер для UI
     try {
         const channelResult = await pool.query('SELECT server_id FROM channels WHERE id = $1', [channelId]);
         if (channelResult.rows[0]) {
@@ -348,7 +373,8 @@ async function handleVoiceLeave(odego) {
         console.error('Voice leave broadcast error:', e);
     }
     
-    sendToUser(odego, { type: 'VOICE_LEFT', channelId: channelId });
+    // Подтверждаем выход пользователю
+    sendToUser(userId, { type: 'VOICE_LEFT', channelId: channelId });
 }
 
 wss.on('connection', (ws) => {
@@ -415,6 +441,7 @@ wss.on('connection', (ws) => {
 
                 case 'VOICE_SIGNAL':
                     if (msg.targetUserId && msg.signal) {
+                        console.log(`[VOICE SIGNAL] ${odego} -> ${msg.targetUserId}:`, msg.signal.type || 'candidate');
                         sendToUser(msg.targetUserId, {
                             type: 'VOICE_SIGNAL',
                             fromUserId: odego,
@@ -539,11 +566,13 @@ wss.on('connection', (ws) => {
         wsUserMap.delete(ws);
         
         if (odego) {
+            // Выходим из голосового канала
             await handleVoiceLeave(odego);
             
             const sockets = clients.get(odego);
             if (sockets) {
                 sockets.delete(ws);
+                // Обновляем статус только если это последнее соединение
                 if (sockets.size === 0) {
                     clients.delete(odego);
                     await pool.query('UPDATE users SET status = $1 WHERE id = $2', ['offline', odego]);
@@ -1006,10 +1035,6 @@ app.get('/health', async (req, res) => {
     }
 });
 
-// ============================================
-// КЛИЕНТСКАЯ ЧАСТЬ (HTML)
-// ============================================
-
 app.get('/', (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -1222,14 +1247,15 @@ app.get('/', (req, res) => {
     var reconnectAttempts = 0;
     var MAX_RECONNECT_ATTEMPTS = 5;
 
-    // WEBRTC
+    // WEBRTC - ИСПРАВЛЕННЫЕ ПЕРЕМЕННЫЕ
     var localStream = null;
-    var peerConnections = new Map();
+    var peerConnections = new Map(); // odego -> RTCPeerConnection
     var currentVoiceChannel = null;
-    var voiceParticipants = new Map();
+    var voiceParticipants = new Map(); // odego -> participant info
     var isMuted = false;
     var isDeafened = false;
     var iceServers = [];
+    var pendingCandidates = new Map(); // odego -> candidates[] для хранения кандидатов до установки remote description
 
     // ============================================
     // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -1257,13 +1283,15 @@ app.get('/', (req, res) => {
         return div.innerHTML;
     }
 
-    function getUserVoiceChannel(userId) {
+    // ИСПРАВЛЕНО: Поиск канала где находится пользователь
+    function getUserVoiceChannel(odego) {
         if (!currentServer || !currentServer.channels) return null;
         for (var i = 0; i < currentServer.channels.length; i++) {
             var channel = currentServer.channels[i];
-            if (channel.voiceParticipants) {
+            if (channel.type === 'voice' && channel.voiceParticipants) {
                 for (var j = 0; j < channel.voiceParticipants.length; j++) {
-                    if (channel.voiceParticipants[j].userId === userId) {
+                    // ИСПРАВЛЕНО: проверяем odego
+                    if (channel.voiceParticipants[j].odego === odego) {
                         return channel;
                     }
                 }
@@ -1322,6 +1350,14 @@ app.get('/', (req, res) => {
 
         ws.onclose = function() {
             console.log('WebSocket disconnected');
+            // Очищаем голосовое соединение при разрыве WS
+            if (currentVoiceChannel) {
+                cleanupVoice();
+                currentVoiceChannel = null;
+                renderChannels();
+                renderUserPanel();
+                renderVoiceConnected();
+            }
             if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && token) {
                 reconnectAttempts++;
                 setTimeout(connectWebSocket, Math.min(1000 * reconnectAttempts, 5000));
@@ -1334,9 +1370,11 @@ app.get('/', (req, res) => {
     }
 
     function handleWebSocketMessage(data) {
+        console.log('[WS] Received:', data.type, data);
+        
         switch (data.type) {
             case 'AUTH_SUCCESS':
-                console.log('WebSocket authenticated');
+                console.log('WebSocket authenticated, odego:', data.odego);
                 if (data.iceServers) iceServers = data.iceServers;
                 break;
 
@@ -1361,7 +1399,7 @@ app.get('/', (req, res) => {
                 break;
 
             case 'USER_STATUS_CHANGE':
-                updateUserStatus(data.userId, data.status);
+                updateUserStatus(data.odego, data.status);
                 break;
 
             case 'CHANNEL_CREATED':
@@ -1392,7 +1430,7 @@ app.get('/', (req, res) => {
 
             case 'MEMBER_LEFT':
                 if (currentServer && currentServer.id === data.serverId) {
-                    currentServer.members = currentServer.members ? currentServer.members.filter(function(m) { return m.id !== data.userId; }) : [];
+                    currentServer.members = currentServer.members ? currentServer.members.filter(function(m) { return m.id !== data.odego; }) : [];
                     renderMembers();
                 }
                 break;
@@ -1405,6 +1443,10 @@ app.get('/', (req, res) => {
                 }
                 render();
                 break;
+
+            // ============================================
+            // ИСПРАВЛЕННЫЕ ГОЛОСОВЫЕ ОБРАБОТЧИКИ
+            // ============================================
 
             case 'VOICE_JOINED':
                 handleVoiceJoined(data);
@@ -1441,6 +1483,11 @@ app.get('/', (req, res) => {
             case 'VOICE_ERROR':
                 console.error('Voice error:', data.error);
                 alert('Ошибка голосового чата: ' + data.error);
+                cleanupVoice();
+                currentVoiceChannel = null;
+                renderChannels();
+                renderUserPanel();
+                renderVoiceConnected();
                 break;
 
             case 'VOICE_KICKED':
@@ -1476,9 +1523,9 @@ app.get('/', (req, res) => {
         }
     }
 
-    function updateUserStatus(userId, status) {
+    function updateUserStatus(odego, status) {
         if (currentServer && currentServer.members) {
-            var member = currentServer.members.find(function(m) { return m.id === userId; });
+            var member = currentServer.members.find(function(m) { return m.id === odego; });
             if (member) {
                 member.status = status;
                 renderMembers();
@@ -1487,11 +1534,16 @@ app.get('/', (req, res) => {
     }
 
     // ============================================
-    // WEBRTC ГОЛОСОВОЙ ЧАТ
+    // ИСПРАВЛЕННЫЙ WEBRTC ГОЛОСОВОЙ ЧАТ
     // ============================================
 
     function joinVoiceChannel(channel) {
-        if (currentVoiceChannel && currentVoiceChannel.id === channel.id) return;
+        if (currentVoiceChannel && currentVoiceChannel.id === channel.id) {
+            console.log('[VOICE] Already in this channel');
+            return;
+        }
+
+        console.log('[VOICE] Requesting microphone access...');
 
         navigator.mediaDevices.getUserMedia({
             audio: {
@@ -1501,7 +1553,16 @@ app.get('/', (req, res) => {
             },
             video: false
         }).then(function(stream) {
+            console.log('[VOICE] Got microphone access, joining channel:', channel.id);
             localStream = stream;
+            
+            // Применяем текущее состояние mute
+            if (isMuted) {
+                localStream.getAudioTracks().forEach(function(track) {
+                    track.enabled = false;
+                });
+            }
+            
             ws.send(JSON.stringify({ type: 'VOICE_JOIN', channelId: channel.id }));
         }).catch(function(error) {
             console.error('Failed to get microphone access:', error);
@@ -1509,25 +1570,55 @@ app.get('/', (req, res) => {
         });
     }
 
+    // ИСПРАВЛЕНО: Обработка успешного присоединения к голосовому каналу
     function handleVoiceJoined(data) {
-        currentVoiceChannel = currentServer ? currentServer.channels.find(function(c) { return c.id === data.channelId; }) : null;
+        console.log('[VOICE] Joined channel:', data.channelId, 'Existing participants:', data.participants);
+        
+        // Находим канал в текущем сервере
+        if (currentServer) {
+            currentVoiceChannel = currentServer.channels.find(function(c) { return c.id === data.channelId; });
+        }
+        
         if (data.iceServers) iceServers = data.iceServers;
 
+        // Очищаем старые соединения
         voiceParticipants.clear();
-        data.participants.forEach(function(p) {
-            voiceParticipants.set(p.userId, p);
-            createPeerConnection(p.userId, true);
-        });
+        pendingCandidates.clear();
+        
+        // Добавляем существующих участников и создаём соединения с ними
+        // Мы (как присоединяющийся) инициируем соединение
+        if (data.participants && data.participants.length > 0) {
+            data.participants.forEach(function(p) {
+                console.log('[VOICE] Creating connection to existing participant:', p.username, p.odego);
+                voiceParticipants.set(p.odego, p);
+                // Мы инициаторы - создаём offer
+                createPeerConnection(p.odego, true);
+            });
+        }
 
         isMuted = false;
         isDeafened = false;
+
+        // Обновляем локальный список участников канала
+        if (currentVoiceChannel) {
+            currentVoiceChannel.voiceParticipants = Array.from(voiceParticipants.values());
+            // Добавляем себя
+            currentVoiceChannel.voiceParticipants.push({
+                odego: currentUser.id,
+                username: currentUser.username,
+                muted: false,
+                deafened: false
+            });
+        }
 
         renderChannels();
         renderUserPanel();
         renderVoiceConnected();
     }
 
+    // ИСПРАВЛЕНО: Обработка выхода из голосового канала
     function handleVoiceLeft(data) {
+        console.log('[VOICE] Left channel:', data.channelId);
         cleanupVoice();
         currentVoiceChannel = null;
 
@@ -1536,47 +1627,82 @@ app.get('/', (req, res) => {
         renderVoiceConnected();
     }
 
+    // ИСПРАВЛЕНО: Когда другой пользователь присоединяется
     function handleVoiceUserJoined(data) {
-        voiceParticipants.set(data.user.userId, data.user);
+        console.log('[VOICE] User joined:', data.user.username, data.user.odego);
+        
+        // Проверяем, что это не мы сами
+        if (data.user.odego === currentUser.id) {
+            console.log('[VOICE] Ignoring own join event');
+            return;
+        }
+        
+        // Проверяем дубликаты
+        if (voiceParticipants.has(data.user.odego)) {
+            console.log('[VOICE] User already in participants, skipping');
+            return;
+        }
+        
+        voiceParticipants.set(data.user.odego, data.user);
 
-        if (currentServer) {
+        // Обновляем список участников канала
+        if (currentServer && currentVoiceChannel) {
             var channel = currentServer.channels.find(function(c) { return c.id === data.channelId; });
             if (channel) {
                 if (!channel.voiceParticipants) channel.voiceParticipants = [];
-                channel.voiceParticipants.push(data.user);
+                // Проверяем дубликаты в channel.voiceParticipants
+                var exists = channel.voiceParticipants.some(function(p) { return p.odego === data.user.odego; });
+                if (!exists) {
+                    channel.voiceParticipants.push(data.user);
+                }
             }
         }
+
+        // НЕ создаём соединение здесь - новый участник сам пришлёт offer
+        // Мы только ждём сигнала от него
 
         renderChannels();
     }
 
+    // ИСПРАВЛЕНО: Когда другой пользователь покидает канал
     function handleVoiceUserLeft(data) {
-        voiceParticipants.delete(data.userId);
+        console.log('[VOICE] User left:', data.odego);
+        
+        voiceParticipants.delete(data.odego);
+        pendingCandidates.delete(data.odego);
 
-        var pc = peerConnections.get(data.userId);
+        // Закрываем peer connection
+        var pc = peerConnections.get(data.odego);
         if (pc) {
             pc.close();
-            peerConnections.delete(data.userId);
+            peerConnections.delete(data.odego);
         }
 
-        var audioEl = document.getElementById('audio-' + data.userId);
-        if (audioEl) audioEl.remove();
+        // Удаляем аудио элемент
+        var audioEl = document.getElementById('audio-' + data.odego);
+        if (audioEl) {
+            audioEl.srcObject = null;
+            audioEl.remove();
+        }
 
+        // Обновляем список участников канала
         if (currentServer) {
             var channel = currentServer.channels.find(function(c) { return c.id === data.channelId; });
             if (channel && channel.voiceParticipants) {
-                channel.voiceParticipants = channel.voiceParticipants.filter(function(p) { return p.userId !== data.userId; });
+                channel.voiceParticipants = channel.voiceParticipants.filter(function(p) { return p.odego !== data.odego; });
             }
         }
 
         renderChannels();
     }
 
+    // ИСПРАВЛЕНО: Обработка WebRTC сигналов
     function handleVoiceSignal(data) {
         var signal = data.signal;
+        console.log('[VOICE SIGNAL] From:', data.fromUserId, 'Type:', signal.type || 'candidate');
 
         if (signal.type === 'offer') {
-            handleOffer(data.fromUserId, signal);
+            handleOffer(data.fromUserId, data.fromUsername, signal);
         } else if (signal.type === 'answer') {
             handleAnswer(data.fromUserId, signal);
         } else if (signal.candidate) {
@@ -1584,102 +1710,201 @@ app.get('/', (req, res) => {
         }
     }
 
-    function createPeerConnection(userId, initiator) {
-        if (peerConnections.has(userId)) return Promise.resolve(peerConnections.get(userId));
+    // ИСПРАВЛЕНО: Создание peer connection
+    function createPeerConnection(odego, initiator) {
+        console.log('[WEBRTC] Creating peer connection to:', odego, 'initiator:', initiator);
+        
+        // Закрываем старое соединение если есть
+        if (peerConnections.has(odego)) {
+            var oldPc = peerConnections.get(odego);
+            oldPc.close();
+            peerConnections.delete(odego);
+        }
 
-        var config = { iceServers: iceServers.length > 0 ? iceServers : [{ urls: 'stun:stun.l.google.com:19302' }] };
+        var config = { 
+            iceServers: iceServers.length > 0 ? iceServers : [{ urls: 'stun:stun.l.google.com:19302' }]
+        };
+        
         var pc = new RTCPeerConnection(config);
-        peerConnections.set(userId, pc);
+        peerConnections.set(odego, pc);
+        pendingCandidates.set(odego, []);
 
+        // Добавляем локальный аудио поток
         if (localStream) {
             localStream.getTracks().forEach(function(track) {
+                console.log('[WEBRTC] Adding local track:', track.kind);
                 pc.addTrack(track, localStream);
             });
         }
 
+        // Обработка ICE кандидатов
         pc.onicecandidate = function(event) {
             if (event.candidate) {
+                console.log('[WEBRTC] Sending ICE candidate to:', odego);
                 ws.send(JSON.stringify({
                     type: 'VOICE_SIGNAL',
-                    targetUserId: userId,
+                    targetUserId: odego,
                     signal: event.candidate
                 }));
             }
         };
 
-        pc.ontrack = function(event) {
-            var audioEl = document.getElementById('audio-' + userId);
-            if (!audioEl) {
-                audioEl = document.createElement('audio');
-                audioEl.id = 'audio-' + userId;
-                audioEl.autoplay = true;
-                audioEl.playsInline = true;
-                document.body.appendChild(audioEl);
-            }
-            audioEl.srcObject = event.streams[0];
-
-            if (isDeafened) {
-                audioEl.muted = true;
+        // Обработка изменения состояния ICE
+        pc.oniceconnectionstatechange = function() {
+            console.log('[WEBRTC] ICE state for', odego, ':', pc.iceConnectionState);
+            if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+                console.log('[WEBRTC] Connection failed/disconnected with:', odego);
             }
         };
 
+        // ИСПРАВЛЕНО: Обработка входящего аудио потока
+        pc.ontrack = function(event) {
+            console.log('[WEBRTC] Received remote track from:', odego, 'kind:', event.track.kind);
+            
+            if (event.streams && event.streams[0]) {
+                var audioEl = document.getElementById('audio-' + odego);
+                if (!audioEl) {
+                    audioEl = document.createElement('audio');
+                    audioEl.id = 'audio-' + odego;
+                    audioEl.autoplay = true;
+                    audioEl.playsInline = true;
+                    document.body.appendChild(audioEl);
+                    console.log('[WEBRTC] Created audio element for:', odego);
+                }
+                
+                audioEl.srcObject = event.streams[0];
+                audioEl.muted = isDeafened;
+                
+                // Пробуем воспроизвести
+                audioEl.play().then(function() {
+                    console.log('[WEBRTC] Audio playing for:', odego);
+                }).catch(function(e) {
+                    console.error('[WEBRTC] Audio play failed:', e);
+                });
+            }
+        };
+
+        // Если мы инициатор, создаём offer
         if (initiator) {
-            return pc.createOffer().then(function(offer) {
+            pc.createOffer().then(function(offer) {
+                console.log('[WEBRTC] Created offer for:', odego);
                 return pc.setLocalDescription(offer);
             }).then(function() {
+                console.log('[WEBRTC] Sending offer to:', odego);
                 ws.send(JSON.stringify({
                     type: 'VOICE_SIGNAL',
-                    targetUserId: userId,
+                    targetUserId: odego,
                     signal: pc.localDescription
                 }));
-                return pc;
             }).catch(function(e) {
-                console.error('Error creating offer:', e);
-                return pc;
+                console.error('[WEBRTC] Error creating offer:', e);
             });
         }
 
-        return Promise.resolve(pc);
+        return pc;
     }
 
-    function handleOffer(userId, offer) {
-        createPeerConnection(userId, false).then(function(pc) {
-            return pc.setRemoteDescription(new RTCSessionDescription(offer)).then(function() {
-                return pc.createAnswer();
-            }).then(function(answer) {
-                return pc.setLocalDescription(answer);
-            }).then(function() {
-                ws.send(JSON.stringify({
-                    type: 'VOICE_SIGNAL',
-                    targetUserId: userId,
-                    signal: pc.localDescription
-                }));
+    // ИСПРАВЛЕНО: Обработка входящего offer
+    function handleOffer(odego, username, offer) {
+        console.log('[WEBRTC] Handling offer from:', odego);
+        
+        // Добавляем участника если ещё нет
+        if (!voiceParticipants.has(odego)) {
+            voiceParticipants.set(odego, {
+                odego: odego,
+                username: username,
+                muted: false,
+                deafened: false
             });
+        }
+        
+        // Создаём peer connection (мы не инициаторы)
+        var pc = createPeerConnection(odego, false);
+        
+        pc.setRemoteDescription(new RTCSessionDescription(offer)).then(function() {
+            console.log('[WEBRTC] Set remote description (offer) from:', odego);
+            
+            // Применяем отложенные ICE кандидаты
+            var candidates = pendingCandidates.get(odego) || [];
+            candidates.forEach(function(candidate) {
+                pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(function(e) {
+                    console.error('[WEBRTC] Error adding pending candidate:', e);
+                });
+            });
+            pendingCandidates.set(odego, []);
+            
+            return pc.createAnswer();
+        }).then(function(answer) {
+            console.log('[WEBRTC] Created answer for:', odego);
+            return pc.setLocalDescription(answer);
+        }).then(function() {
+            console.log('[WEBRTC] Sending answer to:', odego);
+            ws.send(JSON.stringify({
+                type: 'VOICE_SIGNAL',
+                targetUserId: odego,
+                signal: pc.localDescription
+            }));
         }).catch(function(e) {
-            console.error('Error handling offer:', e);
+            console.error('[WEBRTC] Error handling offer:', e);
         });
     }
 
-    function handleAnswer(userId, answer) {
-        var pc = peerConnections.get(userId);
-        if (pc) {
-            pc.setRemoteDescription(new RTCSessionDescription(answer)).catch(function(e) {
-                console.error('Error handling answer:', e);
-            });
+    // ИСПРАВЛЕНО: Обработка входящего answer
+    function handleAnswer(odego, answer) {
+        console.log('[WEBRTC] Handling answer from:', odego);
+        
+        var pc = peerConnections.get(odego);
+        if (!pc) {
+            console.error('[WEBRTC] No peer connection for answer from:', odego);
+            return;
         }
+        
+        pc.setRemoteDescription(new RTCSessionDescription(answer)).then(function() {
+            console.log('[WEBRTC] Set remote description (answer) from:', odego);
+            
+            // Применяем отложенные ICE кандидаты
+            var candidates = pendingCandidates.get(odego) || [];
+            candidates.forEach(function(candidate) {
+                pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(function(e) {
+                    console.error('[WEBRTC] Error adding pending candidate:', e);
+                });
+            });
+            pendingCandidates.set(odego, []);
+        }).catch(function(e) {
+            console.error('[WEBRTC] Error handling answer:', e);
+        });
     }
 
-    function handleIceCandidate(userId, candidate) {
-        var pc = peerConnections.get(userId);
-        if (pc) {
-            pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(function(e) {
-                console.error('Error adding ICE candidate:', e);
+    // ИСПРАВЛЕНО: Обработка ICE кандидатов
+    function handleIceCandidate(odego, candidate) {
+        var pc = peerConnections.get(odego);
+        
+        if (!pc) {
+            console.log('[WEBRTC] Queuing ICE candidate for:', odego);
+            if (!pendingCandidates.has(odego)) {
+                pendingCandidates.set(odego, []);
+            }
+            pendingCandidates.get(odego).push(candidate);
+            return;
+        }
+        
+        if (pc.remoteDescription) {
+            pc.addIceCandidate(new RTCIceCandidate(candidate)).then(function() {
+                console.log('[WEBRTC] Added ICE candidate from:', odego);
+            }).catch(function(e) {
+                console.error('[WEBRTC] Error adding ICE candidate:', e);
             });
+        } else {
+            console.log('[WEBRTC] Queuing ICE candidate (no remote desc) for:', odego);
+            if (!pendingCandidates.has(odego)) {
+                pendingCandidates.set(odego, []);
+            }
+            pendingCandidates.get(odego).push(candidate);
         }
     }
 
     function handleVoiceUserMute(data) {
-        var participant = voiceParticipants.get(data.userId);
+        var participant = voiceParticipants.get(data.odego);
         if (participant) {
             participant.muted = data.muted;
         }
@@ -1687,7 +1912,7 @@ app.get('/', (req, res) => {
         if (currentServer) {
             currentServer.channels.forEach(function(channel) {
                 if (channel.voiceParticipants) {
-                    var p = channel.voiceParticipants.find(function(p) { return p.userId === data.userId; });
+                    var p = channel.voiceParticipants.find(function(p) { return p.odego === data.odego; });
                     if (p) p.muted = data.muted;
                 }
             });
@@ -1697,7 +1922,7 @@ app.get('/', (req, res) => {
     }
 
     function handleVoiceUserDeafen(data) {
-        var participant = voiceParticipants.get(data.userId);
+        var participant = voiceParticipants.get(data.odego);
         if (participant) {
             participant.deafened = data.deafened;
             participant.muted = data.muted;
@@ -1706,28 +1931,33 @@ app.get('/', (req, res) => {
         renderChannels();
     }
 
+    // ИСПРАВЛЕНО: Обработка обновления состояния голоса (для синхронизации между устройствами)
     function handleVoiceStateUpdate(data) {
-        if (currentServer) {
-            var channel = currentServer.channels.find(function(c) { return c.id === data.channelId; });
-            if (channel) {
-                if (!channel.voiceParticipants) channel.voiceParticipants = [];
+        console.log('[VOICE STATE] Update:', data.action, 'user:', data.odego, 'channel:', data.channelId);
+        
+        if (!currentServer) return;
+        
+        var channel = currentServer.channels.find(function(c) { return c.id === data.channelId; });
+        if (!channel) return;
+        
+        if (!channel.voiceParticipants) channel.voiceParticipants = [];
 
-                if (data.action === 'join') {
-                    if (!channel.voiceParticipants.find(function(p) { return p.userId === data.userId; })) {
-                        channel.voiceParticipants.push({
-                            userId: data.userId,
-                            username: data.username,
-                            muted: false,
-                            deafened: false
-                        });
-                    }
-                } else if (data.action === 'leave') {
-                    channel.voiceParticipants = channel.voiceParticipants.filter(function(p) { return p.userId !== data.userId; });
-                }
-
-                renderChannels();
+        if (data.action === 'join') {
+            // ИСПРАВЛЕНО: Проверяем дубликаты перед добавлением
+            var exists = channel.voiceParticipants.some(function(p) { return p.odego === data.odego; });
+            if (!exists) {
+                channel.voiceParticipants.push({
+                    odego: data.odego,
+                    username: data.username,
+                    muted: false,
+                    deafened: false
+                });
             }
+        } else if (data.action === 'leave') {
+            channel.voiceParticipants = channel.voiceParticipants.filter(function(p) { return p.odego !== data.odego; });
         }
+
+        renderChannels();
     }
 
     function handleVoiceKicked(data) {
@@ -1742,6 +1972,7 @@ app.get('/', (req, res) => {
     function leaveVoiceChannel() {
         if (!currentVoiceChannel) return;
 
+        console.log('[VOICE] Leaving channel');
         ws.send(JSON.stringify({ type: 'VOICE_LEAVE' }));
         cleanupVoice();
         currentVoiceChannel = null;
@@ -1751,16 +1982,28 @@ app.get('/', (req, res) => {
         renderVoiceConnected();
     }
 
+    // ИСПРАВЛЕНО: Очистка всех голосовых ресурсов
     function cleanupVoice() {
+        console.log('[VOICE] Cleaning up voice resources');
+        
+        // Закрываем все peer connections
         peerConnections.forEach(function(pc, odego) {
+            console.log('[VOICE] Closing peer connection:', odego);
             pc.close();
             var audioEl = document.getElementById('audio-' + odego);
-            if (audioEl) audioEl.remove();
+            if (audioEl) {
+                audioEl.srcObject = null;
+                audioEl.remove();
+            }
         });
         peerConnections.clear();
+        pendingCandidates.clear();
 
+        // Останавливаем локальный поток
         if (localStream) {
-            localStream.getTracks().forEach(function(track) { track.stop(); });
+            localStream.getTracks().forEach(function(track) { 
+                track.stop(); 
+            });
             localStream = null;
         }
 
@@ -1777,6 +2020,7 @@ app.get('/', (req, res) => {
             track.enabled = !isMuted;
         });
 
+        console.log('[VOICE] Mute toggled:', isMuted);
         ws.send(JSON.stringify({ type: 'VOICE_TOGGLE_MUTE', muted: isMuted }));
 
         renderUserPanel();
@@ -1786,10 +2030,12 @@ app.get('/', (req, res) => {
     function toggleDeafen() {
         isDeafened = !isDeafened;
 
+        // Mute/unmute все входящие аудио
         document.querySelectorAll('audio[id^="audio-"]').forEach(function(audio) {
             audio.muted = isDeafened;
         });
 
+        // Если заглушили звук, автоматически mute микрофон
         if (isDeafened && !isMuted) {
             isMuted = true;
             if (localStream) {
@@ -1799,6 +2045,7 @@ app.get('/', (req, res) => {
             }
         }
 
+        console.log('[VOICE] Deafen toggled:', isDeafened);
         ws.send(JSON.stringify({ type: 'VOICE_TOGGLE_DEAFEN', deafened: isDeafened }));
 
         renderUserPanel();
@@ -1920,7 +2167,7 @@ app.get('/', (req, res) => {
         for (var i = 0; i < servers.length; i++) {
             var s = servers[i];
             html += '<div class="server-icon ' + (currentServer && currentServer.id === s.id ? 'active' : '') + '" ' +
-                'onclick="selectServer(\\'' + s.id + '\\')" title="' + escapeHtml(s.name) + '">';
+                'onclick="selectServer(\'' + s.id + '\')" title="' + escapeHtml(s.name) + '">';
             if (s.icon_url) {
                 html += '<img src="' + s.icon_url + '">';
             } else {
@@ -1961,23 +2208,23 @@ app.get('/', (req, res) => {
 
         var html = '<div class="channel-category">' +
             '<span>Текстовые каналы</span>' +
-            (currentServer.owner_id === currentUser.id ? '<button onclick="showCreateChannelModal(\\'text\\')">+</button>' : '') +
+            (currentServer.owner_id === currentUser.id ? '<button onclick="showCreateChannelModal(\'text\')">+</button>' : '') +
             '</div>';
 
         for (var i = 0; i < textChannels.length; i++) {
             var c = textChannels[i];
-            html += '<div class="channel-item ' + (currentChannel && currentChannel.id === c.id ? 'active' : '') + '" onclick="selectChannel(\\'' + c.id + '\\')">' +
+            html += '<div class="channel-item ' + (currentChannel && currentChannel.id === c.id ? 'active' : '') + '" onclick="selectChannel(\'' + c.id + '\')">' +
                 '<span class="icon">#</span>' +
                 '<span class="name">' + escapeHtml(c.name) + '</span>';
             if (currentServer.owner_id === currentUser.id && textChannels.length > 1) {
-                html += '<button class="delete-btn" onclick="event.stopPropagation(); deleteChannel(\\'' + c.id + '\\')">×</button>';
+                html += '<button class="delete-btn" onclick="event.stopPropagation(); deleteChannel(\'' + c.id + '\')">×</button>';
             }
             html += '</div>';
         }
 
         html += '<div class="channel-category">' +
             '<span>Голосовые каналы</span>' +
-            (currentServer.owner_id === currentUser.id ? '<button onclick="showCreateChannelModal(\\'voice\\')">+</button>' : '') +
+            (currentServer.owner_id === currentUser.id ? '<button onclick="showCreateChannelModal(\'voice\')">+</button>' : '') +
             '</div>';
 
         for (var j = 0; j < voiceChannels.length; j++) {
@@ -1987,11 +2234,11 @@ app.get('/', (req, res) => {
             var isConnected = currentVoiceChannel && currentVoiceChannel.id === vc.id;
 
             html += '<div class="voice-channel ' + (hasUsers ? 'has-users' : '') + '">' +
-                '<div class="channel-item ' + (isConnected ? 'active' : '') + '" onclick="handleVoiceChannelClick(\\'' + vc.id + '\\')">' +
+                '<div class="channel-item ' + (isConnected ? 'active' : '') + '" onclick="handleVoiceChannelClick(\'' + vc.id + '\')">' +
                 '<span class="icon">🔊</span>' +
                 '<span class="name">' + escapeHtml(vc.name) + '</span>';
             if (currentServer.owner_id === currentUser.id && voiceChannels.length > 1) {
-                html += '<button class="delete-btn" onclick="event.stopPropagation(); deleteChannel(\\'' + vc.id + '\\')">×</button>';
+                html += '<button class="delete-btn" onclick="event.stopPropagation(); deleteChannel(\'' + vc.id + '\')">×</button>';
             }
             html += '</div>';
 
@@ -2136,11 +2383,12 @@ app.get('/', (req, res) => {
         
         for (var i = 0; i < online.length; i++) {
             var m = online[i];
-            html += '<div class="member-item" onclick="startDM(\\'' + m.id + '\\')">' +
+            var inVoice = getUserVoiceChannel(m.id);
+            html += '<div class="member-item" onclick="startDM(\'' + m.id + '\')">' +
                 '<div class="avatar">' + getInitials(m.username) +
                 '<div class="status-dot online"></div></div>' +
                 '<span class="name">' + escapeHtml(m.username) + '</span>' +
-                (getUserVoiceChannel(m.id) ? '<span class="voice-icon">🔊</span>' : '') +
+                (inVoice ? '<span class="voice-icon">🔊</span>' : '') +
                 '</div>';
         }
         
@@ -2148,7 +2396,7 @@ app.get('/', (req, res) => {
         
         for (var j = 0; j < offline.length; j++) {
             var mo = offline[j];
-            html += '<div class="member-item" onclick="startDM(\\'' + mo.id + '\\')">' +
+            html += '<div class="member-item" onclick="startDM(\'' + mo.id + '\')">' +
                 '<div class="avatar">' + getInitials(mo.username) +
                 '<div class="status-dot offline"></div></div>' +
                 '<span class="name">' + escapeHtml(mo.username) + '</span>' +
@@ -2187,7 +2435,7 @@ app.get('/', (req, res) => {
                     var html = '';
                     for (var i = 0; i < users.length; i++) {
                         var u = users[i];
-                        html += '<div class="dm-item" onclick="startDM(\\'' + u.id + '\\')">' +
+                        html += '<div class="dm-item" onclick="startDM(\'' + u.id + '\')">' +
                             '<div class="avatar">' + getInitials(u.username) + '</div>' +
                             '<span class="name">' + escapeHtml(u.username) + '</span>' +
                             '</div>';
@@ -2212,7 +2460,7 @@ app.get('/', (req, res) => {
                 var html = '';
                 for (var i = 0; i < conversations.length; i++) {
                     var c = conversations[i];
-                    html += '<div class="dm-item ' + (currentDM && currentDM.id === c.id ? 'active' : '') + '" onclick="selectDM(\\'' + c.id + '\\', \\'' + escapeHtml(c.username) + '\\')">' +
+                    html += '<div class="dm-item ' + (currentDM && currentDM.id === c.id ? 'active' : '') + '" onclick="selectDM(\'' + c.id + '\', \'' + escapeHtml(c.username) + '\')">' +
                         '<div class="avatar">' + getInitials(c.username) + '</div>' +
                         '<span class="name">' + escapeHtml(c.username) + '</span>' +
                         '</div>';
@@ -2319,7 +2567,7 @@ app.get('/', (req, res) => {
             '</div></div>' +
             '<div class="modal-footer">' +
             '<button class="btn secondary" onclick="closeModal()">Отмена</button>' +
-            '<button class="btn" onclick="createChannel(\\'' + type + '\\')">Создать</button>' +
+            '<button class="btn" onclick="createChannel(\'' + type + '\')">Создать</button>' +
             '</div></div></div>';
     }
 
@@ -2418,6 +2666,7 @@ app.get('/', (req, res) => {
         if (!channel || channel.type !== 'voice') return;
 
         if (currentVoiceChannel && currentVoiceChannel.id === channelId) {
+            console.log('[VOICE] Already in this channel, ignoring click');
             return;
         }
 
@@ -2475,9 +2724,9 @@ app.get('/', (req, res) => {
         input.value = '';
     }
 
-    function selectDM(userId, username) {
-        currentDM = { id: userId, username: username };
-        api('/api/dm/' + userId + '?limit=50')
+    function selectDM(odego, username) {
+        currentDM = { id: odego, username: username };
+        api('/api/dm/' + odego + '?limit=50')
             .then(function(data) {
                 messages = data;
                 renderDMChatArea();
@@ -2487,13 +2736,13 @@ app.get('/', (req, res) => {
             });
     }
 
-    function startDM(userId) {
+    function startDM(odego) {
         currentServer = null;
         currentChannel = null;
-        api('/api/users/' + userId)
+        api('/api/users/' + odego)
             .then(function(user) {
-                currentDM = { id: userId, username: user.username };
-                return api('/api/dm/' + userId + '?limit=50');
+                currentDM = { id: odego, username: user.username };
+                return api('/api/dm/' + odego + '?limit=50');
             })
             .then(function(data) {
                 messages = data;
