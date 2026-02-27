@@ -1816,14 +1816,14 @@ app.get('/', (req, res) => {
         app.innerHTML = \`
         <div class="app-container">
             <div class="server-list" id="serverList"></div>
-            ${currentServer ? `
+            \${currentServer ? \`
                 <div class="channel-sidebar" id="channelSidebar"></div>
                 <div class="chat-area" id="chatArea"></div>
                 <div class="members-sidebar" id="membersSidebar"></div>
-            ` : `
+            \` : \`
                 <div class="dm-sidebar" id="dmSidebar"></div>
                 <div class="chat-area" id="chatArea"></div>
-            `}
+            \`}
         </div>
         <div id="modalContainer"></div>
     \`;
