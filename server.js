@@ -2116,36 +2116,33 @@ function getClientHTML() {
         if (avatar) avatar.classList.toggle('speaking', speakingUsers.has(currentUser.id) && currentVoiceChannel);
     }
 
-    function handleVoiceJoined(data) {
+    function handleVoiceUserJoined(data) {
+        var odego = data.user.visitorId || data.user.odego;
+        if (odego === currentUser.id) return;
+    
+        console.log('[VOICE] User joined:', odego, data.user.username);
+    
         if (currentServer) {
-            currentVoiceChannel = currentServer.channels.find(function(c) { return c.id === data.channelId; });
+            var ch = currentServer.channels.find(function(c) { return c.id === data.channelId; });
+            if (ch) {
+                if (!ch.voiceParticipants) ch.voiceParticipants = [];
+                if (!ch.voiceParticipants.some(function(p) { return (p.visitorId || p.odego) === odego; })) {
+                    ch.voiceParticipants.push(data.user);
+                }
+            }
         }
-        if (data.iceServers) iceServers = data.iceServers;
-        
-        voiceParticipants.clear();
-        pendingCandidates.clear();
-        speakingUsers.clear();
-        isMuted = false;
-        isDeafened = false;
-        
-        if (data.participants) {
-            data.participants.forEach(function(p) {
-                voiceParticipants.set(p.visitorId || p.odego, p);
-                createPeerConnection(p.visitorId || p.odego, true);
-            });
+    
+        // ИСПРАВЛЕНИЕ: Если мы уже в этом голосовом канале, создаём peer connection
+        if (currentVoiceChannel && currentVoiceChannel.id === data.channelId && localStream) {
+            if (!voiceParticipants.has(odego)) {
+                voiceParticipants.set(odego, data.user);
+            }
+            // Мы уже были в канале, поэтому инициируем соединение
+            console.log('[VOICE] Creating peer connection to new user:', odego);
+            createPeerConnection(odego, true);
         }
-        
-        if (currentVoiceChannel) {
-            currentVoiceChannel.voiceParticipants = Array.from(voiceParticipants.values());
-            currentVoiceChannel.voiceParticipants.push({
-                visitorId: currentUser.id,
-                username: currentUser.username,
-                muted: false,
-                deafened: false
-            });
-        }
-        
-        render();
+    
+        renderChannels();
     }
 
     function handleVoiceLeft(data) {
