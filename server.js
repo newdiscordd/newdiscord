@@ -1076,8 +1076,6 @@ function getClientHTML() {
             height: 100vh;
             overflow: hidden;
         }
-        
-        /* Auth Styles */
         .auth-container {
             display: flex;
             align-items: center;
@@ -1092,19 +1090,9 @@ function getClientHTML() {
             width: 100%;
             max-width: 480px;
         }
-        .auth-box h1 {
-            text-align: center;
-            margin-bottom: 8px;
-            font-size: 24px;
-        }
-        .auth-box p {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
+        .auth-box h1 { text-align: center; margin-bottom: 8px; font-size: 24px; }
+        .auth-box p { text-align: center; color: var(--text-secondary); margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
         .form-group label {
             display: block;
             margin-bottom: 8px;
@@ -1113,7 +1101,7 @@ function getClientHTML() {
             text-transform: uppercase;
             color: var(--text-secondary);
         }
-        .form-group input, .form-group select {
+        .form-group input {
             width: 100%;
             padding: 10px;
             border: none;
@@ -1122,9 +1110,7 @@ function getClientHTML() {
             color: var(--text-primary);
             font-size: 16px;
         }
-        .form-group input:focus, .form-group select:focus {
-            outline: 2px solid var(--accent);
-        }
+        .form-group input:focus { outline: 2px solid var(--accent); }
         .btn {
             width: 100%;
             padding: 12px;
@@ -1135,22 +1121,10 @@ function getClientHTML() {
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.2s;
         }
         .btn:hover { background: var(--accent-hover); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .auth-switch {
-            text-align: center;
-            margin-top: 16px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .auth-switch a {
-            color: var(--accent);
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .auth-switch a:hover { text-decoration: underline; }
+        .auth-switch { text-align: center; margin-top: 16px; color: var(--text-secondary); font-size: 14px; }
+        .auth-switch a { color: var(--accent); text-decoration: none; cursor: pointer; }
         .error-msg {
             background: rgba(242,63,67,0.1);
             border: 1px solid var(--red);
@@ -1160,14 +1134,7 @@ function getClientHTML() {
             margin-bottom: 16px;
             font-size: 14px;
         }
-        
-        /* App Layout */
-        .app-container {
-            display: flex;
-            height: 100vh;
-        }
-        
-        /* Server List */
+        .app-container { display: flex; height: 100vh; }
         .server-list {
             width: 72px;
             background: var(--bg-tertiary);
@@ -1192,32 +1159,10 @@ function getClientHTML() {
             color: var(--text-primary);
             flex-shrink: 0;
         }
-        .server-icon:hover, .server-icon.active {
-            border-radius: 16px;
-            background: var(--accent);
-        }
-        .server-icon.home:hover, .server-icon.home.active {
-            background: var(--accent);
-        }
-        .server-icon.add {
-            background: var(--bg-primary);
-            color: var(--green);
-            font-size: 24px;
-        }
-        .server-icon.add:hover {
-            background: var(--green);
-            color: white;
-            border-radius: 16px;
-        }
-        .separator {
-            width: 32px;
-            height: 2px;
-            background: var(--bg-secondary);
-            border-radius: 1px;
-            margin: 4px 0;
-        }
-        
-        /* Channel Sidebar */
+        .server-icon:hover, .server-icon.active { border-radius: 16px; background: var(--accent); }
+        .server-icon.add { color: var(--green); font-size: 24px; }
+        .server-icon.add:hover { background: var(--green); color: white; border-radius: 16px; }
+        .separator { width: 32px; height: 2px; background: var(--bg-secondary); border-radius: 1px; margin: 4px 0; }
         .channel-sidebar {
             width: 240px;
             background: var(--bg-secondary);
@@ -1235,11 +1180,7 @@ function getClientHTML() {
             cursor: pointer;
         }
         .server-header:hover { background: var(--bg-tertiary); }
-        .channel-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 0;
-        }
+        .channel-list { flex: 1; overflow-y: auto; padding: 8px 0; }
         .channel-category {
             padding: 16px 8px 4px 16px;
             font-size: 12px;
@@ -1259,10 +1200,7 @@ function getClientHTML() {
             padding: 2px 6px;
             border-radius: 4px;
         }
-        .channel-category button:hover {
-            color: var(--text-primary);
-            background: var(--bg-tertiary);
-        }
+        .channel-category button:hover { color: var(--text-primary); background: var(--bg-tertiary); }
         .channel-item {
             display: flex;
             align-items: center;
@@ -1273,26 +1211,10 @@ function getClientHTML() {
             color: var(--channel-text);
             gap: 6px;
         }
-        .channel-item:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-        }
-        .channel-item.active {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-        .channel-item .icon {
-            font-size: 20px;
-            width: 24px;
-            text-align: center;
-        }
-        .channel-item .name {
-            flex: 1;
-            font-size: 15px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .channel-item:hover { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .channel-item.active { background: var(--bg-tertiary); color: var(--text-primary); }
+        .channel-item .icon { font-size: 20px; width: 24px; text-align: center; }
+        .channel-item .name { flex: 1; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .channel-item .delete-btn {
             opacity: 0;
             background: none;
@@ -1304,29 +1226,11 @@ function getClientHTML() {
             font-size: 16px;
         }
         .channel-item:hover .delete-btn { opacity: 1; }
-        .channel-item .delete-btn:hover {
-            color: var(--red);
-            background: rgba(242,63,67,0.1);
-        }
-        
-        /* Voice Channel */
-        .voice-channel {
-            margin: 2px 8px;
-            border-radius: 4px;
-        }
-        .voice-channel .channel-item {
-            margin: 0;
-            border-radius: 4px;
-        }
-        .voice-channel.has-users .channel-item {
-            border-radius: 4px 4px 0 0;
-            background: var(--bg-tertiary);
-        }
-        .voice-participants {
-            background: var(--bg-tertiary);
-            border-radius: 0 0 4px 4px;
-            padding: 4px 0;
-        }
+        .channel-item .delete-btn:hover { color: var(--red); background: rgba(242,63,67,0.1); }
+        .voice-channel { margin: 2px 8px; border-radius: 4px; }
+        .voice-channel .channel-item { margin: 0; }
+        .voice-channel.has-users .channel-item { border-radius: 4px 4px 0 0; background: var(--bg-tertiary); }
+        .voice-participants { background: var(--bg-tertiary); border-radius: 0 0 4px 4px; padding: 4px 0; }
         .voice-participant {
             display: flex;
             align-items: center;
@@ -1347,26 +1251,10 @@ function getClientHTML() {
             font-weight: 600;
             transition: box-shadow 0.15s ease;
         }
-        .voice-participant .name {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .voice-participant .status-icons {
-            display: flex;
-            gap: 4px;
-            font-size: 12px;
-        }
-        .voice-participant.speaking .avatar {
-            box-shadow: 0 0 0 2px var(--green);
-        }
-        .voice-participant .mute-icon,
-        .voice-participant .deafen-icon {
-            color: var(--red);
-        }
-        
-        /* User Panel */
+        .voice-participant .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .voice-participant .status-icons { display: flex; gap: 4px; font-size: 12px; }
+        .voice-participant.speaking .avatar { box-shadow: 0 0 0 2px var(--green); }
+        .voice-participant .mute-icon, .voice-participant .deafen-icon { color: var(--red); }
         .user-panel {
             padding: 8px;
             background: var(--bg-tertiary);
@@ -1386,28 +1274,11 @@ function getClientHTML() {
             font-size: 12px;
             transition: box-shadow 0.15s ease;
         }
-        .user-panel .avatar.speaking {
-            box-shadow: 0 0 0 3px var(--green);
-        }
-        .user-panel .info {
-            flex: 1;
-            min-width: 0;
-        }
-        .user-panel .username {
-            font-size: 14px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .user-panel .status {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .user-panel .actions {
-            display: flex;
-            gap: 4px;
-        }
+        .user-panel .avatar.speaking { box-shadow: 0 0 0 3px var(--green); }
+        .user-panel .info { flex: 1; min-width: 0; }
+        .user-panel .username { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-panel .status { font-size: 12px; color: var(--text-muted); }
+        .user-panel .actions { display: flex; gap: 4px; }
         .user-panel .actions button {
             background: none;
             border: none;
@@ -1417,24 +1288,10 @@ function getClientHTML() {
             border-radius: 4px;
             font-size: 16px;
         }
-        .user-panel .actions button:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
+        .user-panel .actions button:hover { background: var(--bg-secondary); color: var(--text-primary); }
         .user-panel .actions button.muted { color: var(--red); }
-        
-        /* Voice Connected Panel */
-        .voice-connected {
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--bg-primary);
-            padding: 8px;
-        }
-        .voice-connected .voice-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
+        .voice-connected { background: var(--bg-tertiary); border-bottom: 1px solid var(--bg-primary); padding: 8px; }
+        .voice-connected .voice-status { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
         .voice-connected .voice-status .indicator {
             width: 8px;
             height: 8px;
@@ -1442,24 +1299,11 @@ function getClientHTML() {
             background: var(--green);
             animation: pulse 2s infinite;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .voice-connected .voice-status .text { flex: 1; }
-        .voice-connected .voice-status .text .title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--green);
-        }
-        .voice-connected .voice-status .text .channel {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .voice-connected .voice-controls {
-            display: flex;
-            gap: 8px;
-        }
+        .voice-connected .voice-status .text .title { font-size: 13px; font-weight: 600; color: var(--green); }
+        .voice-connected .voice-status .text .channel { font-size: 12px; color: var(--text-muted); }
+        .voice-connected .voice-controls { display: flex; gap: 8px; }
         .voice-connected .voice-controls button {
             flex: 1;
             padding: 8px;
@@ -1471,20 +1315,9 @@ function getClientHTML() {
             font-size: 14px;
         }
         .voice-connected .voice-controls button:hover { background: var(--bg-primary); }
-        .voice-connected .voice-controls button.active {
-            color: var(--red);
-            background: rgba(242,63,67,0.2);
-        }
-        .voice-connected .voice-controls .disconnect {
-            background: rgba(242,63,67,0.2);
-            color: var(--red);
-        }
-        .voice-connected .voice-controls .disconnect:hover {
-            background: var(--red);
-            color: white;
-        }
-        
-        /* Chat Area */
+        .voice-connected .voice-controls button.active { color: var(--red); background: rgba(242,63,67,0.2); }
+        .voice-connected .voice-controls .disconnect { background: rgba(242,63,67,0.2); color: var(--red); }
+        .voice-connected .voice-controls .disconnect:hover { background: var(--red); color: white; }
         .chat-area {
             flex: 1;
             display: flex;
@@ -1510,10 +1343,7 @@ function getClientHTML() {
             flex-direction: column;
             gap: 16px;
         }
-        .message {
-            display: flex;
-            gap: 16px;
-        }
+        .message { display: flex; gap: 16px; }
         .message .avatar {
             width: 40px;
             height: 40px;
@@ -1526,33 +1356,12 @@ function getClientHTML() {
             font-weight: 600;
             font-size: 14px;
         }
-        .message .content {
-            flex: 1;
-            min-width: 0;
-        }
-        .message .header {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-        .message .author {
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-        .message .timestamp {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .message .text {
-            color: var(--text-secondary);
-            word-wrap: break-word;
-            line-height: 1.4;
-        }
-        .message-input-container {
-            padding: 0 16px 24px;
-            flex-shrink: 0;
-        }
+        .message .content { flex: 1; min-width: 0; }
+        .message .header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+        .message .author { font-weight: 500; color: var(--text-primary); }
+        .message .timestamp { font-size: 12px; color: var(--text-muted); }
+        .message .text { color: var(--text-secondary); word-wrap: break-word; line-height: 1.4; }
+        .message-input-container { padding: 0 16px 24px; flex-shrink: 0; }
         .message-input {
             display: flex;
             align-items: center;
@@ -1579,27 +1388,14 @@ function getClientHTML() {
             font-size: 18px;
         }
         .message-input button:hover { color: var(--text-primary); }
-        .typing-indicator {
-            font-size: 12px;
-            color: var(--text-muted);
-            padding: 4px 16px;
-            min-height: 20px;
-        }
-        
-        /* Members Sidebar */
+        .typing-indicator { font-size: 12px; color: var(--text-muted); padding: 4px 16px; min-height: 20px; }
         .members-sidebar {
             width: 240px;
             background: var(--bg-secondary);
             padding: 16px 8px;
             overflow-y: auto;
         }
-        .members-category {
-            padding: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--channel-text);
-        }
+        .members-category { padding: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--channel-text); }
         .member-item {
             display: flex;
             align-items: center;
@@ -1632,26 +1428,11 @@ function getClientHTML() {
         }
         .member-item .avatar .status-dot.online { background: var(--green); }
         .member-item .avatar .status-dot.offline { background: var(--text-muted); }
-        .member-item .name {
-            font-size: 15px;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1;
-        }
-        .member-item .voice-icon {
-            font-size: 14px;
-            color: var(--green);
-        }
-        
-        /* Modal */
+        .member-item .name { font-size: 15px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .member-item .voice-icon { font-size: 14px; color: var(--green); }
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.85);
             display: flex;
             align-items: center;
@@ -1666,23 +1447,10 @@ function getClientHTML() {
             max-height: 90vh;
             overflow: hidden;
         }
-        .modal-header {
-            padding: 16px;
-            text-align: center;
-        }
-        .modal-header h2 {
-            font-size: 20px;
-            margin-bottom: 8px;
-        }
-        .modal-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .modal-body {
-            padding: 0 16px 16px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
+        .modal-header { padding: 16px; text-align: center; }
+        .modal-header h2 { font-size: 20px; margin-bottom: 8px; }
+        .modal-header p { color: var(--text-secondary); font-size: 14px; }
+        .modal-body { padding: 0 16px 16px; max-height: 60vh; overflow-y: auto; }
         .modal-footer {
             padding: 16px;
             background: var(--bg-secondary);
@@ -1690,19 +1458,10 @@ function getClientHTML() {
             justify-content: flex-end;
             gap: 8px;
         }
-        .modal-footer .btn {
-            width: auto;
-            padding: 10px 24px;
-        }
-        .modal-footer .btn.secondary {
-            background: transparent;
-            color: var(--text-primary);
-        }
+        .modal-footer .btn { width: auto; padding: 10px 24px; }
+        .modal-footer .btn.secondary { background: transparent; color: var(--text-primary); }
         .modal-footer .btn.secondary:hover { text-decoration: underline; }
-        .modal-tabs {
-            display: flex;
-            margin-bottom: 16px;
-        }
+        .modal-tabs { display: flex; margin-bottom: 16px; }
         .modal-tabs button {
             flex: 1;
             padding: 12px;
@@ -1714,10 +1473,7 @@ function getClientHTML() {
         }
         .modal-tabs button:first-child { border-radius: 4px 0 0 4px; }
         .modal-tabs button:last-child { border-radius: 0 4px 4px 0; }
-        .modal-tabs button.active {
-            background: var(--accent);
-            color: white;
-        }
+        .modal-tabs button.active { background: var(--accent); color: white; }
         .invite-code {
             background: var(--bg-tertiary);
             padding: 12px;
@@ -1728,18 +1484,8 @@ function getClientHTML() {
             margin: 16px 0;
             user-select: all;
         }
-        
-        /* DM Sidebar */
-        .dm-sidebar {
-            width: 240px;
-            background: var(--bg-secondary);
-            display: flex;
-            flex-direction: column;
-        }
-        .dm-header {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--bg-tertiary);
-        }
+        .dm-sidebar { width: 240px; background: var(--bg-secondary); display: flex; flex-direction: column; }
+        .dm-header { padding: 12px 16px; border-bottom: 1px solid var(--bg-tertiary); }
         .dm-search {
             width: 100%;
             padding: 8px;
@@ -1750,11 +1496,7 @@ function getClientHTML() {
             font-size: 14px;
         }
         .dm-search:focus { outline: none; }
-        .dm-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
+        .dm-list { flex: 1; overflow-y: auto; padding: 8px; }
         .dm-item {
             display: flex;
             align-items: center;
@@ -1777,16 +1519,7 @@ function getClientHTML() {
             font-size: 12px;
             font-weight: 600;
         }
-        .dm-item .name {
-            flex: 1;
-            font-size: 15px;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        /* Empty State */
+        .dm-item .name { flex: 1; font-size: 15px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .empty-state {
             display: flex;
             flex-direction: column;
@@ -1797,33 +1530,38 @@ function getClientHTML() {
             text-align: center;
             padding: 32px;
         }
-        .empty-state .icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-        .empty-state h3 {
-            margin-bottom: 8px;
-            color: var(--text-primary);
-        }
-        
-        /* Scrollbar */
+        .empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { margin-bottom: 8px; color: var(--text-primary); }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--bg-primary); }
+        @media (max-width: 900px) { .members-sidebar { display: none; } }
+        @media (max-width: 600px) { .channel-sidebar, .dm-sidebar { width: 200px; } }
         
-        /* Responsive */
-        @media (max-width: 900px) {
-            .members-sidebar { display: none; }
+        /* Debug panel */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 4px;
+            z-index: 9999;
+            display: none;
         }
-        @media (max-width: 600px) {
-            .channel-sidebar, .dm-sidebar { width: 200px; }
-        }
+        .debug-panel.show { display: block; }
     </style>
 </head>
 <body>
 <div id="app"></div>
+<div id="debugPanel" class="debug-panel"></div>
 <script>
 (function() {
     var API_URL = window.location.origin;
@@ -1853,6 +1591,24 @@ function getClientHTML() {
     var speakingUsers = new Set();
     var audioContext = null;
     var localAnalyser = null;
+    
+    // Debug
+    var debugMode = true;
+    var debugLog = [];
+
+    function debug(msg) {
+        if (!debugMode) return;
+        var time = new Date().toLocaleTimeString();
+        var entry = '[' + time + '] ' + msg;
+        debugLog.push(entry);
+        if (debugLog.length > 50) debugLog.shift();
+        console.log(entry);
+        var panel = document.getElementById('debugPanel');
+        if (panel) {
+            panel.innerHTML = debugLog.join('<br>');
+            panel.scrollTop = panel.scrollHeight;
+        }
+    }
 
     function $(sel) { return document.querySelector(sel); }
     function $$(sel) { return document.querySelectorAll(sel); }
@@ -1865,9 +1621,7 @@ function getClientHTML() {
         return isToday ? 'Сегодня в ' + time : d.toLocaleDateString('ru-RU') + ' ' + time;
     }
 
-    function getInitials(name) {
-        return name ? name.substring(0, 2).toUpperCase() : '??';
-    }
+    function getInitials(name) { return name ? name.substring(0, 2).toUpperCase() : '??'; }
 
     function escapeHtml(text) {
         var div = document.createElement('div');
@@ -1894,10 +1648,11 @@ function getClientHTML() {
 
     function connectWebSocket() {
         if (ws && ws.readyState === WebSocket.OPEN) return;
+        debug('Connecting WebSocket...');
         ws = new WebSocket(WS_URL);
         
         ws.onopen = function() {
-            console.log('WebSocket connected');
+            debug('WebSocket connected');
             reconnectAttempts = 0;
             if (token) ws.send(JSON.stringify({ type: 'AUTH', token: token }));
         };
@@ -1909,7 +1664,7 @@ function getClientHTML() {
         };
         
         ws.onclose = function() {
-            console.log('WebSocket disconnected');
+            debug('WebSocket disconnected');
             if (currentVoiceChannel) {
                 cleanupVoice();
                 currentVoiceChannel = null;
@@ -1923,11 +1678,14 @@ function getClientHTML() {
     }
 
     function handleWebSocketMessage(data) {
-        console.log('[WS] Received:', data.type, data);
+        if (data.type !== 'PONG') {
+            debug('WS: ' + data.type);
+        }
+        
         switch (data.type) {
             case 'AUTH_SUCCESS':
                 if (data.iceServers) iceServers = data.iceServers;
-                console.log('[AUTH] Success, ICE servers:', iceServers);
+                debug('Auth OK, ICE servers: ' + iceServers.length);
                 break;
             case 'NEW_CHANNEL_MESSAGE':
                 if (currentChannel && data.message.channel_id === currentChannel.id) {
@@ -2012,13 +1770,13 @@ function getClientHTML() {
                 handleVoiceSpeaking(data);
                 break;
             case 'VOICE_ERROR':
-                alert('Ошибка голосового чата: ' + data.error);
+                alert('Ошибка: ' + data.error);
                 cleanupVoice();
                 currentVoiceChannel = null;
                 render();
                 break;
             case 'VOICE_KICKED':
-                alert('Вы отключены от голосового канала: ' + data.reason);
+                alert('Отключен: ' + data.reason);
                 cleanupVoice();
                 currentVoiceChannel = null;
                 render();
@@ -2054,28 +1812,66 @@ function getClientHTML() {
     }
 
     // ============================================
-    // VOICE CHAT - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // VOICE CHAT - FIXED VERSION WITH TURN
     // ============================================
+    
+    function getIceServers() {
+        // Используем бесплатные TURN серверы от metered.ca
+        // Также можно использовать OpenRelay или Twilio
+        return [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+            // Бесплатные TURN серверы (open relay project)
+            {
+                urls: 'turn:openrelay.metered.ca:80',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            },
+            {
+                urls: 'turn:openrelay.metered.ca:443',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            },
+            {
+                urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }
+        ];
+    }
+
+    // Определяем кто инициатор по сравнению ID (меньший ID = инициатор)
+    function shouldInitiate(myId, peerId) {
+        return myId < peerId;
+    }
 
     function joinVoiceChannel(channel) {
-        console.log('[VOICE] Attempting to join channel:', channel.id, channel.name);
+        debug('Joining voice channel: ' + channel.name);
         
         if (currentVoiceChannel && currentVoiceChannel.id === channel.id) {
-            console.log('[VOICE] Already in this channel');
+            debug('Already in this channel');
             return;
         }
         
-        // Если уже в другом канале - выйти
         if (currentVoiceChannel) {
-            console.log('[VOICE] Leaving current channel first');
+            debug('Leaving current channel first');
             leaveVoiceChannel();
+            return; // Выйдем и потом перезайдём
         }
         
         navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+            audio: { 
+                echoCancellation: true, 
+                noiseSuppression: true, 
+                autoGainControl: true,
+                sampleRate: 48000
+            },
             video: false
         }).then(function(stream) {
-            console.log('[VOICE] Got microphone access');
+            debug('Got microphone, tracks: ' + stream.getAudioTracks().length);
             localStream = stream;
             
             if (isMuted) {
@@ -2091,14 +1887,13 @@ function getClientHTML() {
                 source.connect(localAnalyser);
                 detectSpeaking();
             } catch (e) {
-                console.error('[VOICE] Audio context error:', e);
+                debug('Audio context error: ' + e.message);
             }
             
-            // Отправляем запрос на присоединение
             ws.send(JSON.stringify({ type: 'VOICE_JOIN', channelId: channel.id }));
             
         }).catch(function(e) {
-            console.error('[VOICE] Microphone error:', e);
+            debug('Mic error: ' + e.message);
             alert('Не удалось получить доступ к микрофону: ' + e.message);
         });
     }
@@ -2111,7 +1906,7 @@ function getClientHTML() {
         var avg = data.reduce(function(a,b) { return a+b; }, 0) / data.length;
         
         var wasSpeaking = speakingUsers.has(currentUser.id);
-        var isSpeaking = avg > 20 && !isMuted;
+        var isSpeaking = avg > 25 && !isMuted;
         
         if (isSpeaking !== wasSpeaking) {
             if (isSpeaking) speakingUsers.add(currentUser.id);
@@ -2140,18 +1935,10 @@ function getClientHTML() {
         if (avatar) avatar.classList.toggle('speaking', speakingUsers.has(currentUser.id) && currentVoiceChannel);
     }
 
-    // ИСПРАВЛЕНО: Обработка успешного подключения к голосовому каналу
     function handleVoiceJoined(data) {
-        console.log('[VOICE] Successfully joined channel:', data.channelId);
-        console.log('[VOICE] Existing participants:', data.participants);
-        console.log('[VOICE] ICE servers:', data.iceServers);
+        debug('VOICE_JOINED, participants: ' + (data.participants ? data.participants.length : 0));
         
-        // Сохраняем ICE серверы
-        if (data.iceServers && data.iceServers.length) {
-            iceServers = data.iceServers;
-        }
-        
-        // Находим канал и устанавливаем его как текущий
+        // Находим канал
         var channel = null;
         if (currentServer && currentServer.channels) {
             channel = currentServer.channels.find(function(c) { return c.id === data.channelId; });
@@ -2159,8 +1946,6 @@ function getClientHTML() {
         
         if (channel) {
             currentVoiceChannel = channel;
-            
-            // Обновляем список участников в канале
             if (!channel.voiceParticipants) channel.voiceParticipants = [];
             
             // Добавляем себя
@@ -2176,22 +1961,22 @@ function getClientHTML() {
                 });
             }
         } else {
-            // Создаём временный объект канала
             currentVoiceChannel = { id: data.channelId, name: 'Голосовой канал' };
         }
         
-        // Очищаем старые соединения
         voiceParticipants.clear();
         
-        // Создаём peer connections к существующим участникам
+        // Создаём соединения к существующим участникам
         if (data.participants && data.participants.length > 0) {
             data.participants.forEach(function(participant) {
                 var odego = participant.visitorId || participant.odego;
-                console.log('[VOICE] Creating connection to existing participant:', odego, participant.username);
+                debug('Existing participant: ' + participant.username + ' (' + odego + ')');
                 voiceParticipants.set(odego, participant);
                 
-                // Мы инициатор, потому что присоединяемся к существующим
-                createPeerConnection(odego, true);
+                // Определяем кто инициатор по ID
+                var initiate = shouldInitiate(currentUser.id, odego);
+                debug('Should initiate to ' + odego + ': ' + initiate);
+                createPeerConnection(odego, initiate);
             });
         }
         
@@ -2199,7 +1984,7 @@ function getClientHTML() {
     }
 
     function handleVoiceLeft(data) {
-        console.log('[VOICE] Left channel:', data.channelId);
+        debug('VOICE_LEFT');
         
         if (currentServer) {
             var ch = currentServer.channels.find(function(c) { return c.id === data.channelId; });
@@ -2215,14 +2000,13 @@ function getClientHTML() {
         render();
     }
 
-    // ИСПРАВЛЕНО: Единственная версия функции
     function handleVoiceUserJoined(data) {
         var odego = data.user.visitorId || data.user.odego;
         if (odego === currentUser.id) return;
         
-        console.log('[VOICE] User joined:', odego, data.user.username);
+        debug('User joined: ' + data.user.username);
         
-        // Обновляем UI списка участников
+        // Обновляем UI
         if (currentServer) {
             var ch = currentServer.channels.find(function(c) { return c.id === data.channelId; });
             if (ch) {
@@ -2236,16 +2020,18 @@ function getClientHTML() {
             }
         }
         
-        // ВАЖНО: Если мы уже в этом голосовом канале, создаём peer connection
+        // Если мы в этом канале - создаём соединение
         if (currentVoiceChannel && currentVoiceChannel.id === data.channelId && localStream) {
-            console.log('[VOICE] We are in this channel, creating peer connection to new user');
+            debug('Creating connection to new user');
             
             if (!voiceParticipants.has(odego)) {
                 voiceParticipants.set(odego, data.user);
             }
             
-            // Мы уже были в канале, новый пользователь присоединился - МЫ инициируем соединение
-            createPeerConnection(odego, true);
+            // Определяем инициатора по ID
+            var initiate = shouldInitiate(currentUser.id, odego);
+            debug('Should initiate to ' + odego + ': ' + initiate);
+            createPeerConnection(odego, initiate);
         }
         
         renderChannels();
@@ -2253,7 +2039,7 @@ function getClientHTML() {
 
     function handleVoiceUserLeft(data) {
         var odego = data.visitorId;
-        console.log('[VOICE] User left:', odego);
+        debug('User left: ' + odego);
         
         voiceParticipants.delete(odego);
         pendingCandidates.delete(odego);
@@ -2284,9 +2070,10 @@ function getClientHTML() {
     }
 
     function handleVoiceSignal(data) {
-        console.log('[VOICE] Signal from:', data.fromUserId, 'type:', data.signal.type || 'candidate');
-        
         var signal = data.signal;
+        var type = signal.type || (signal.candidate ? 'candidate' : 'unknown');
+        debug('Signal from ' + data.fromUserId.slice(0,8) + ': ' + type);
+        
         if (signal.type === 'offer') {
             handleOffer(data.fromUserId, data.fromUsername, signal);
         } else if (signal.type === 'answer') {
@@ -2297,41 +2084,36 @@ function getClientHTML() {
     }
 
     function createPeerConnection(odego, initiator) {
-        console.log('[VOICE] Creating peer connection to:', odego, 'initiator:', initiator);
+        debug('Creating PC to ' + odego.slice(0,8) + ', initiator: ' + initiator);
         
-        // Закрываем существующее соединение если есть
         if (peerConnections.has(odego)) {
-            console.log('[VOICE] Closing existing connection to:', odego);
+            debug('Closing existing PC');
             peerConnections.get(odego).close();
             peerConnections.delete(odego);
         }
         
         var config = { 
-            iceServers: iceServers.length ? iceServers : [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
-            ]
+            iceServers: getIceServers(),
+            iceCandidatePoolSize: 10
         };
-        
-        console.log('[VOICE] RTCPeerConnection config:', config);
         
         var pc = new RTCPeerConnection(config);
         peerConnections.set(odego, pc);
         pendingCandidates.set(odego, []);
         
-        // Добавляем локальный аудио поток
+        // Добавляем треки
         if (localStream) {
             localStream.getTracks().forEach(function(track) { 
-                console.log('[VOICE] Adding track to peer connection:', track.kind);
+                debug('Adding track: ' + track.kind);
                 pc.addTrack(track, localStream); 
             });
         } else {
-            console.warn('[VOICE] No local stream available!');
+            debug('WARNING: No local stream!');
         }
         
         pc.onicecandidate = function(e) {
             if (e.candidate) {
-                console.log('[VOICE] Sending ICE candidate to:', odego);
+                debug('Sending ICE candidate to ' + odego.slice(0,8));
                 ws.send(JSON.stringify({ 
                     type: 'VOICE_SIGNAL', 
                     targetUserId: odego, 
@@ -2341,15 +2123,19 @@ function getClientHTML() {
         };
         
         pc.oniceconnectionstatechange = function() {
-            console.log('[VOICE] ICE connection state with', odego, ':', pc.iceConnectionState);
+            debug('ICE state ' + odego.slice(0,8) + ': ' + pc.iceConnectionState);
+            if (pc.iceConnectionState === 'failed') {
+                debug('ICE failed, restarting...');
+                pc.restartIce();
+            }
         };
         
         pc.onconnectionstatechange = function() {
-            console.log('[VOICE] Connection state with', odego, ':', pc.connectionState);
+            debug('Connection state ' + odego.slice(0,8) + ': ' + pc.connectionState);
         };
         
         pc.ontrack = function(e) {
-            console.log('[VOICE] Received track from:', odego, e.streams);
+            debug('Got track from ' + odego.slice(0,8));
             
             if (e.streams && e.streams[0]) {
                 var audio = document.getElementById('audio-' + odego);
@@ -2362,31 +2148,40 @@ function getClientHTML() {
                 }
                 audio.srcObject = e.streams[0];
                 audio.muted = isDeafened;
-                audio.play().then(function() {
-                    console.log('[VOICE] Audio playing from:', odego);
-                }).catch(function(err) {
-                    console.error('[VOICE] Audio play error:', err);
-                });
+                
+                // Пытаемся воспроизвести
+                var playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(function() {
+                        debug('Audio playing from ' + odego.slice(0,8));
+                    }).catch(function(err) {
+                        debug('Audio play error: ' + err.message);
+                        // Пробуем ещё раз через взаимодействие пользователя
+                        document.addEventListener('click', function playOnClick() {
+                            audio.play();
+                            document.removeEventListener('click', playOnClick);
+                        }, { once: true });
+                    });
+                }
             }
         };
         
         if (initiator) {
-            console.log('[VOICE] Creating offer for:', odego);
+            debug('Creating offer for ' + odego.slice(0,8));
             pc.createOffer({
                 offerToReceiveAudio: true,
                 offerToReceiveVideo: false
             }).then(function(offer) {
-                console.log('[VOICE] Setting local description (offer)');
                 return pc.setLocalDescription(offer);
             }).then(function() {
-                console.log('[VOICE] Sending offer to:', odego);
+                debug('Sending offer to ' + odego.slice(0,8));
                 ws.send(JSON.stringify({ 
                     type: 'VOICE_SIGNAL', 
                     targetUserId: odego, 
                     signal: pc.localDescription 
                 }));
             }).catch(function(err) {
-                console.error('[VOICE] Create offer error:', err);
+                debug('Offer error: ' + err.message);
             });
         }
         
@@ -2394,7 +2189,7 @@ function getClientHTML() {
     }
 
     function handleOffer(odego, username, offer) {
-        console.log('[VOICE] Handling offer from:', odego, username);
+        debug('Got offer from ' + odego.slice(0,8));
         
         if (!voiceParticipants.has(odego)) {
             voiceParticipants.set(odego, { 
@@ -2403,75 +2198,58 @@ function getClientHTML() {
                 muted: false, 
                 deafened: false 
             });
-            
-            if (currentVoiceChannel) {
-                if (!currentVoiceChannel.voiceParticipants) currentVoiceChannel.voiceParticipants = [];
-                var exists = currentVoiceChannel.voiceParticipants.some(function(p) { 
-                    return (p.visitorId || p.odego) === odego; 
-                });
-                if (!exists) {
-                    currentVoiceChannel.voiceParticipants.push({ 
-                        visitorId: odego, 
-                        username: username, 
-                        muted: false, 
-                        deafened: false 
-                    });
-                    renderChannels();
-                }
-            }
         }
         
+        // При получении offer, мы не инициатор
         var pc = createPeerConnection(odego, false);
         
         pc.setRemoteDescription(new RTCSessionDescription(offer)).then(function() {
-            console.log('[VOICE] Remote description set, processing pending candidates');
+            debug('Remote desc set, processing ' + (pendingCandidates.get(odego) || []).length + ' candidates');
             
             var candidates = pendingCandidates.get(odego) || [];
             candidates.forEach(function(c) { 
                 pc.addIceCandidate(new RTCIceCandidate(c)).catch(function(e) {
-                    console.error('[VOICE] Add ICE candidate error:', e);
+                    debug('Add candidate error: ' + e.message);
                 }); 
             });
             pendingCandidates.set(odego, []);
             
-            console.log('[VOICE] Creating answer for:', odego);
             return pc.createAnswer();
         }).then(function(answer) {
-            console.log('[VOICE] Setting local description (answer)');
             return pc.setLocalDescription(answer);
         }).then(function() {
-            console.log('[VOICE] Sending answer to:', odego);
+            debug('Sending answer to ' + odego.slice(0,8));
             ws.send(JSON.stringify({ 
                 type: 'VOICE_SIGNAL', 
                 targetUserId: odego, 
                 signal: pc.localDescription 
             }));
         }).catch(function(err) {
-            console.error('[VOICE] Handle offer error:', err);
+            debug('Handle offer error: ' + err.message);
         });
     }
 
     function handleAnswer(odego, answer) {
-        console.log('[VOICE] Handling answer from:', odego);
+        debug('Got answer from ' + odego.slice(0,8));
         
         var pc = peerConnections.get(odego);
         if (!pc) {
-            console.warn('[VOICE] No peer connection for:', odego);
+            debug('No PC for ' + odego.slice(0,8));
             return;
         }
         
         pc.setRemoteDescription(new RTCSessionDescription(answer)).then(function() {
-            console.log('[VOICE] Remote description set (answer), processing pending candidates');
+            debug('Answer set, processing candidates');
             
             var candidates = pendingCandidates.get(odego) || [];
             candidates.forEach(function(c) { 
                 pc.addIceCandidate(new RTCIceCandidate(c)).catch(function(e) {
-                    console.error('[VOICE] Add ICE candidate error:', e);
+                    debug('Add candidate error: ' + e.message);
                 }); 
             });
             pendingCandidates.set(odego, []);
         }).catch(function(err) {
-            console.error('[VOICE] Handle answer error:', err);
+            debug('Handle answer error: ' + err.message);
         });
     }
 
@@ -2479,15 +2257,14 @@ function getClientHTML() {
         var pc = peerConnections.get(odego);
         
         if (!pc || !pc.remoteDescription) {
-            console.log('[VOICE] Queuing ICE candidate for:', odego);
+            debug('Queuing candidate for ' + odego.slice(0,8));
             if (!pendingCandidates.has(odego)) pendingCandidates.set(odego, []);
             pendingCandidates.get(odego).push(candidate);
             return;
         }
         
-        console.log('[VOICE] Adding ICE candidate for:', odego);
         pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(function(e) {
-            console.error('[VOICE] Add ICE candidate error:', e);
+            debug('Add candidate error: ' + e.message);
         });
     }
 
@@ -2540,7 +2317,7 @@ function getClientHTML() {
     }
 
     function leaveVoiceChannel() {
-        console.log('[VOICE] Leaving voice channel');
+        debug('Leaving voice channel');
         
         if (!currentVoiceChannel) return;
         
@@ -2550,7 +2327,6 @@ function getClientHTML() {
             ws.send(JSON.stringify({ type: 'VOICE_LEAVE' }));
         }
         
-        // Обновляем UI
         if (currentServer) {
             var ch = currentServer.channels.find(function(c) { return c.id === chId; });
             if (ch && ch.voiceParticipants) {
@@ -2566,7 +2342,7 @@ function getClientHTML() {
     }
 
     function cleanupVoice() {
-        console.log('[VOICE] Cleaning up voice resources');
+        debug('Cleaning up voice');
         
         peerConnections.forEach(function(pc, odego) {
             pc.close();
@@ -2581,9 +2357,7 @@ function getClientHTML() {
         speakingUsers.clear();
         
         if (localStream) {
-            localStream.getTracks().forEach(function(t) { 
-                t.stop(); 
-            });
+            localStream.getTracks().forEach(function(t) { t.stop(); });
             localStream = null;
         }
         
@@ -2602,9 +2376,7 @@ function getClientHTML() {
         if (!localStream) return;
         
         isMuted = !isMuted;
-        localStream.getAudioTracks().forEach(function(t) { 
-            t.enabled = !isMuted; 
-        });
+        localStream.getAudioTracks().forEach(function(t) { t.enabled = !isMuted; });
         
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'VOICE_TOGGLE_MUTE', muted: isMuted }));
@@ -2620,16 +2392,12 @@ function getClientHTML() {
     function toggleDeafen() {
         isDeafened = !isDeafened;
         
-        document.querySelectorAll('audio[id^="audio-"]').forEach(function(a) { 
-            a.muted = isDeafened; 
-        });
+        document.querySelectorAll('audio[id^="audio-"]').forEach(function(a) { a.muted = isDeafened; });
         
         if (isDeafened && !isMuted) {
             isMuted = true;
             if (localStream) {
-                localStream.getAudioTracks().forEach(function(t) { 
-                    t.enabled = false; 
-                });
+                localStream.getAudioTracks().forEach(function(t) { t.enabled = false; });
             }
             speakingUsers.delete(currentUser.id);
         }
@@ -2649,30 +2417,24 @@ function getClientHTML() {
 
     function render() {
         var app = $('#app');
-        if (!token || !currentUser) { 
-            renderAuth(); 
-            return; 
-        }
+        if (!token || !currentUser) { renderAuth(); return; }
         
-        var html = '<div class="app-container">';
-        html += '<div class="server-list" id="serverList"></div>';
-        
+        var html = '<div class="app-container"><div class="server-list" id="serverList"></div>';
         if (currentServer) {
-            html += '<div class="channel-sidebar" id="channelSidebar"></div>';
-            html += '<div class="chat-area" id="chatArea"></div>';
-            html += '<div class="members-sidebar" id="membersSidebar"></div>';
+            html += '<div class="channel-sidebar" id="channelSidebar"></div><div class="chat-area" id="chatArea"></div><div class="members-sidebar" id="membersSidebar"></div>';
         } else {
-            html += '<div class="dm-sidebar" id="dmSidebar"></div>';
-            html += '<div class="chat-area" id="chatArea"></div>';
+            html += '<div class="dm-sidebar" id="dmSidebar"></div><div class="chat-area" id="chatArea"></div>';
         }
-        
-        html += '</div>';
-        html += '<div id="modalContainer"></div>';
-        
+        html += '</div><div id="modalContainer"></div>';
         app.innerHTML = html;
         
-        renderServerList();
+        // Show debug panel
+        var debugPanel = document.getElementById('debugPanel');
+        if (debugPanel && debugMode) {
+            debugPanel.classList.add('show');
+        }
         
+        renderServerList();
         if (currentServer) {
             renderChannelSidebar();
             renderChatArea();
@@ -2690,31 +2452,22 @@ function getClientHTML() {
         app.innerHTML = '<div class="auth-container"><div class="auth-box">' +
             '<h1>' + (isLogin ? 'С возвращением!' : 'Создать аккаунт') + '</h1>' +
             '<p>' + (isLogin ? 'Мы рады видеть вас снова!' : 'Присоединяйтесь!') + '</p>' +
-            '<div id="authError"></div>' +
-            '<form id="authForm">' +
+            '<div id="authError"></div><form id="authForm">' +
             (!isLogin ? '<div class="form-group"><label>Имя пользователя</label><input type="text" id="username" required minlength="3" maxlength="32"></div>' : '') +
             '<div class="form-group"><label>Email</label><input type="email" id="email" required></div>' +
             '<div class="form-group"><label>Пароль</label><input type="password" id="password" required minlength="6"></div>' +
-            '<button type="submit" class="btn">' + (isLogin ? 'Войти' : 'Зарегистрироваться') + '</button>' +
-            '</form>' +
+            '<button type="submit" class="btn">' + (isLogin ? 'Войти' : 'Зарегистрироваться') + '</button></form>' +
             '<div class="auth-switch">' + (isLogin ? 'Нет аккаунта?' : 'Уже есть аккаунт?') +
-            ' <a id="authSwitch">' + (isLogin ? 'Зарегистрироваться' : 'Войти') + '</a></div>' +
-            '</div></div>';
+            ' <a id="authSwitch">' + (isLogin ? 'Зарегистрироваться' : 'Войти') + '</a></div></div></div>';
         
-        $('#authSwitch').onclick = function() { 
-            window.showRegister = isLogin; 
-            renderAuth(); 
-        };
-        
+        $('#authSwitch').onclick = function() { window.showRegister = isLogin; renderAuth(); };
         $('#authForm').onsubmit = function(e) {
             e.preventDefault();
             var email = $('#email').value;
             var password = $('#password').value;
             var usernameEl = $('#username');
             var endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-            var body = isLogin 
-                ? { email: email, password: password } 
-                : { email: email, password: password, username: usernameEl.value };
+            var body = isLogin ? { email: email, password: password } : { email: email, password: password, username: usernameEl.value };
             
             api(endpoint, { method: 'POST', body: JSON.stringify(body) })
                 .then(function(data) {
@@ -2725,9 +2478,7 @@ function getClientHTML() {
                     return loadServers();
                 })
                 .then(function() { render(); })
-                .catch(function(e) { 
-                    $('#authError').innerHTML = '<div class="error-msg">' + e.message + '</div>'; 
-                });
+                .catch(function(e) { $('#authError').innerHTML = '<div class="error-msg">' + e.message + '</div>'; });
         };
     }
 
@@ -2735,23 +2486,17 @@ function getClientHTML() {
         var c = $('#serverList');
         if (!c) return;
         
-        var html = '<div class="server-icon home ' + (!currentServer ? 'active' : '') + '" id="homeBtn" title="Личные сообщения">🏠</div>';
-        html += '<div class="separator"></div>';
-        
+        var html = '<div class="server-icon home ' + (!currentServer ? 'active' : '') + '" id="homeBtn" title="ЛС">🏠</div><div class="separator"></div>';
         servers.forEach(function(s) {
             html += '<div class="server-icon ' + (currentServer && currentServer.id === s.id ? 'active' : '') + '" data-server-id="' + s.id + '" title="' + escapeHtml(s.name) + '">' + getInitials(s.name) + '</div>';
         });
-        
-        html += '<div class="server-icon add" id="addServerBtn" title="Добавить сервер">+</div>';
+        html += '<div class="server-icon add" id="addServerBtn" title="Добавить">+</div>';
         c.innerHTML = html;
         
         $('#homeBtn').onclick = selectHome;
         $('#addServerBtn').onclick = showCreateServerModal;
-        
         $$('.server-icon[data-server-id]').forEach(function(el) {
-            el.onclick = function() { 
-                selectServer(el.getAttribute('data-server-id')); 
-            };
+            el.onclick = function() { selectServer(el.getAttribute('data-server-id')); };
         });
     }
 
@@ -2760,12 +2505,9 @@ function getClientHTML() {
         if (!c || !currentServer) return;
         
         c.innerHTML = '<div class="server-header" id="serverHeader">' + escapeHtml(currentServer.name) + '<span>⌄</span></div>' +
-            '<div class="channel-list" id="channelList"></div>' +
-            '<div id="voiceConnectedPanel"></div>' +
-            '<div class="user-panel" id="userPanel"></div>';
+            '<div class="channel-list" id="channelList"></div><div id="voiceConnectedPanel"></div><div class="user-panel" id="userPanel"></div>';
         
         $('#serverHeader').onclick = showServerSettings;
-        
         renderChannels();
         renderVoiceConnected();
         renderUserPanel();
@@ -2779,35 +2521,29 @@ function getClientHTML() {
         var textCh = channels.filter(function(ch) { return ch.type === 'text'; });
         var voiceCh = channels.filter(function(ch) { return ch.type === 'voice'; });
         
-        var html = '<div class="channel-category"><span>Текстовые каналы</span>';
-        if (currentServer.owner_id === currentUser.id) {
-            html += '<button id="addTextChannel">+</button>';
-        }
-        html += '</div>';
+        var html = '<div class="channel-category"><span>Текстовые каналы</span>' +
+            (currentServer.owner_id === currentUser.id ? '<button id="addTextChannel">+</button>' : '') + '</div>';
         
         textCh.forEach(function(ch) {
-            html += '<div class="channel-item ' + (currentChannel && currentChannel.id === ch.id ? 'active' : '') + '" data-channel-id="' + ch.id + '">';
-            html += '<span class="icon">#</span><span class="name">' + escapeHtml(ch.name) + '</span>';
+            html += '<div class="channel-item ' + (currentChannel && currentChannel.id === ch.id ? 'active' : '') + '" data-channel-id="' + ch.id + '">' +
+                '<span class="icon">#</span><span class="name">' + escapeHtml(ch.name) + '</span>';
             if (currentServer.owner_id === currentUser.id && textCh.length > 1) {
                 html += '<button class="delete-btn" data-delete-channel="' + ch.id + '">×</button>';
             }
             html += '</div>';
         });
         
-        html += '<div class="channel-category"><span>Голосовые каналы</span>';
-        if (currentServer.owner_id === currentUser.id) {
-            html += '<button id="addVoiceChannel">+</button>';
-        }
-        html += '</div>';
+        html += '<div class="channel-category"><span>Голосовые каналы</span>' +
+            (currentServer.owner_id === currentUser.id ? '<button id="addVoiceChannel">+</button>' : '') + '</div>';
         
         voiceCh.forEach(function(ch) {
             var participants = ch.voiceParticipants || [];
             var hasUsers = participants.length > 0;
             var isConnected = currentVoiceChannel && currentVoiceChannel.id === ch.id;
             
-            html += '<div class="voice-channel ' + (hasUsers ? 'has-users' : '') + '">';
-            html += '<div class="channel-item ' + (isConnected ? 'active' : '') + '" data-voice-channel-id="' + ch.id + '">';
-            html += '<span class="icon">🔊</span><span class="name">' + escapeHtml(ch.name) + '</span>';
+            html += '<div class="voice-channel ' + (hasUsers ? 'has-users' : '') + '">' +
+                '<div class="channel-item ' + (isConnected ? 'active' : '') + '" data-voice-channel-id="' + ch.id + '">' +
+                '<span class="icon">🔊</span><span class="name">' + escapeHtml(ch.name) + '</span>';
             if (currentServer.owner_id === currentUser.id && voiceCh.length > 1) {
                 html += '<button class="delete-btn" data-delete-channel="' + ch.id + '">×</button>';
             }
@@ -2818,13 +2554,13 @@ function getClientHTML() {
                 participants.forEach(function(p) {
                     var odego = p.visitorId || p.odego;
                     var isSpeaking = speakingUsers.has(odego);
-                    html += '<div class="voice-participant ' + (isSpeaking ? 'speaking' : '') + '" data-user-id="' + odego + '">';
-                    html += '<div class="avatar">' + getInitials(p.username) + '</div>';
-                    html += '<span class="name">' + escapeHtml(p.username) + '</span>';
-                    html += '<span class="status-icons">';
-                    if (p.muted) html += '<span class="mute-icon">🔇</span>';
-                    if (p.deafened) html += '<span class="deafen-icon">🔕</span>';
-                    html += '</span></div>';
+                    html += '<div class="voice-participant ' + (isSpeaking ? 'speaking' : '') + '" data-user-id="' + odego + '">' +
+                        '<div class="avatar">' + getInitials(p.username) + '</div>' +
+                        '<span class="name">' + escapeHtml(p.username) + '</span>' +
+                        '<span class="status-icons">' +
+                        (p.muted ? '<span class="mute-icon">🔇</span>' : '') +
+                        (p.deafened ? '<span class="deafen-icon">🔕</span>' : '') +
+                        '</span></div>';
                 });
                 html += '</div>';
             }
@@ -2833,61 +2569,38 @@ function getClientHTML() {
         
         c.innerHTML = html;
         
-        var addTextBtn = $('#addTextChannel');
-        if (addTextBtn) addTextBtn.onclick = function() { showCreateChannelModal('text'); };
-        
-        var addVoiceBtn = $('#addVoiceChannel');
-        if (addVoiceBtn) addVoiceBtn.onclick = function() { showCreateChannelModal('voice'); };
+        if ($('#addTextChannel')) $('#addTextChannel').onclick = function() { showCreateChannelModal('text'); };
+        if ($('#addVoiceChannel')) $('#addVoiceChannel').onclick = function() { showCreateChannelModal('voice'); };
         
         $$('.channel-item[data-channel-id]').forEach(function(el) {
             el.onclick = function(e) {
-                if (!e.target.classList.contains('delete-btn')) {
-                    selectChannel(el.getAttribute('data-channel-id'));
-                }
+                if (!e.target.classList.contains('delete-btn')) selectChannel(el.getAttribute('data-channel-id'));
             };
         });
-        
         $$('.channel-item[data-voice-channel-id]').forEach(function(el) {
             el.onclick = function(e) {
                 if (!e.target.classList.contains('delete-btn')) {
-                    var chId = el.getAttribute('data-voice-channel-id');
-                    var ch = currentServer.channels.find(function(c) { return c.id === chId; });
+                    var ch = currentServer.channels.find(function(c) { return c.id === el.getAttribute('data-voice-channel-id'); });
                     if (ch) joinVoiceChannel(ch);
                 }
             };
         });
-        
         $$('[data-delete-channel]').forEach(function(el) {
-            el.onclick = function(e) { 
-                e.stopPropagation(); 
-                deleteChannel(el.getAttribute('data-delete-channel')); 
-            };
+            el.onclick = function(e) { e.stopPropagation(); deleteChannel(el.getAttribute('data-delete-channel')); };
         });
     }
 
     function renderVoiceConnected() {
         var c = $('#voiceConnectedPanel');
         if (!c) return;
+        if (!currentVoiceChannel) { c.innerHTML = ''; return; }
         
-        if (!currentVoiceChannel) { 
-            c.innerHTML = ''; 
-            return; 
-        }
-        
-        c.innerHTML = '<div class="voice-connected">' +
-            '<div class="voice-status">' +
-            '<div class="indicator"></div>' +
-            '<div class="text">' +
-            '<div class="title">Голосовой канал</div>' +
-            '<div class="channel">' + escapeHtml(currentVoiceChannel.name) + '</div>' +
-            '</div>' +
-            '</div>' +
+        c.innerHTML = '<div class="voice-connected"><div class="voice-status"><div class="indicator"></div>' +
+            '<div class="text"><div class="title">Голосовой канал</div><div class="channel">' + escapeHtml(currentVoiceChannel.name) + '</div></div></div>' +
             '<div class="voice-controls">' +
             '<button id="vcMute" class="' + (isMuted ? 'active' : '') + '">' + (isMuted ? '🔇' : '🎤') + '</button>' +
             '<button id="vcDeafen" class="' + (isDeafened ? 'active' : '') + '">' + (isDeafened ? '🔕' : '🔔') + '</button>' +
-            '<button id="vcDisconnect" class="disconnect">📞</button>' +
-            '</div>' +
-            '</div>';
+            '<button id="vcDisconnect" class="disconnect">📞</button></div></div>';
         
         $('#vcMute').onclick = toggleMute;
         $('#vcDeafen').onclick = toggleDeafen;
@@ -2900,29 +2613,20 @@ function getClientHTML() {
         
         var isSpeaking = speakingUsers.has(currentUser.id) && currentVoiceChannel;
         
-        var html = '<div class="avatar ' + (isSpeaking ? 'speaking' : '') + '">' + getInitials(currentUser.username) + '</div>';
-        html += '<div class="info">';
-        html += '<div class="username">' + escapeHtml(currentUser.username) + '</div>';
-        html += '<div class="status">В сети</div>';
-        html += '</div>';
-        html += '<div class="actions">';
+        var html = '<div class="avatar ' + (isSpeaking ? 'speaking' : '') + '">' + getInitials(currentUser.username) + '</div>' +
+            '<div class="info"><div class="username">' + escapeHtml(currentUser.username) + '</div><div class="status">В сети</div></div>' +
+            '<div class="actions">';
         
         if (currentVoiceChannel) {
-            html += '<button id="upMute" class="' + (isMuted ? 'muted' : '') + '">' + (isMuted ? '🔇' : '🎤') + '</button>';
-            html += '<button id="upDeafen" class="' + (isDeafened ? 'muted' : '') + '">' + (isDeafened ? '🔕' : '🎧') + '</button>';
+            html += '<button id="upMute" class="' + (isMuted ? 'muted' : '') + '">' + (isMuted ? '🔇' : '🎤') + '</button>' +
+                '<button id="upDeafen" class="' + (isDeafened ? 'muted' : '') + '">' + (isDeafened ? '🔕' : '🎧') + '</button>';
         }
-        
-        html += '<button id="logoutBtn">🚪</button>';
-        html += '</div>';
+        html += '<button id="logoutBtn">🚪</button></div>';
         
         c.innerHTML = html;
         
-        var muteBtn = $('#upMute');
-        if (muteBtn) muteBtn.onclick = toggleMute;
-        
-        var deafenBtn = $('#upDeafen');
-        if (deafenBtn) deafenBtn.onclick = toggleDeafen;
-        
+        if ($('#upMute')) $('#upMute').onclick = toggleMute;
+        if ($('#upDeafen')) $('#upDeafen').onclick = toggleDeafen;
         $('#logoutBtn').onclick = logout;
     }
 
@@ -2931,7 +2635,7 @@ function getClientHTML() {
         if (!c) return;
         
         if (!currentChannel) {
-            c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><h3>Выберите канал</h3><p>Выберите текстовый канал для общения</p></div>';
+            c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><h3>Выберите канал</h3></div>';
             return;
         }
         
@@ -2958,15 +2662,9 @@ function getClientHTML() {
         var html = '';
         messages.forEach(function(m) {
             var username = m.username || m.sender_username;
-            html += '<div class="message">';
-            html += '<div class="avatar">' + getInitials(username) + '</div>';
-            html += '<div class="content">';
-            html += '<div class="header">';
-            html += '<span class="author">' + escapeHtml(username) + '</span>';
-            html += '<span class="timestamp">' + formatTime(m.created_at) + '</span>';
-            html += '</div>';
-            html += '<div class="text">' + escapeHtml(m.content) + '</div>';
-            html += '</div></div>';
+            html += '<div class="message"><div class="avatar">' + getInitials(username) + '</div><div class="content">' +
+                '<div class="header"><span class="author">' + escapeHtml(username) + '</span><span class="timestamp">' + formatTime(m.created_at) + '</span></div>' +
+                '<div class="text">' + escapeHtml(m.content) + '</div></div></div>';
         });
         c.innerHTML = html;
         scrollToBottom();
@@ -2980,39 +2678,27 @@ function getClientHTML() {
         var offline = currentServer.members.filter(function(m) { return m.status !== 'online'; });
         
         var html = '<div class="members-category">В сети — ' + online.length + '</div>';
-        
         online.forEach(function(m) {
             var inVoice = getMemberVoiceChannel(m.id);
-            html += '<div class="member-item" data-member-id="' + m.id + '">';
-            html += '<div class="avatar">' + getInitials(m.username);
-            html += '<div class="status-dot online"></div></div>';
-            html += '<span class="name">' + escapeHtml(m.username) + '</span>';
-            if (inVoice) html += '<span class="voice-icon">🔊</span>';
-            html += '</div>';
+            html += '<div class="member-item" data-member-id="' + m.id + '"><div class="avatar">' + getInitials(m.username) +
+                '<div class="status-dot online"></div></div><span class="name">' + escapeHtml(m.username) + '</span>' +
+                (inVoice ? '<span class="voice-icon">🔊</span>' : '') + '</div>';
         });
         
         html += '<div class="members-category">Не в сети — ' + offline.length + '</div>';
-        
         offline.forEach(function(m) {
-            html += '<div class="member-item" data-member-id="' + m.id + '">';
-            html += '<div class="avatar">' + getInitials(m.username);
-            html += '<div class="status-dot offline"></div></div>';
-            html += '<span class="name">' + escapeHtml(m.username) + '</span>';
-            html += '</div>';
+            html += '<div class="member-item" data-member-id="' + m.id + '"><div class="avatar">' + getInitials(m.username) +
+                '<div class="status-dot offline"></div></div><span class="name">' + escapeHtml(m.username) + '</span></div>';
         });
         
         c.innerHTML = html;
-        
         $$('.member-item[data-member-id]').forEach(function(el) {
-            el.onclick = function() { 
-                startDM(el.getAttribute('data-member-id')); 
-            };
+            el.onclick = function() { startDM(el.getAttribute('data-member-id')); };
         });
     }
 
     function getMemberVoiceChannel(visitorId) {
         if (!currentServer || !currentServer.channels) return null;
-        
         for (var i = 0; i < currentServer.channels.length; i++) {
             var ch = currentServer.channels[i];
             if (ch.type === 'voice' && ch.voiceParticipants) {
@@ -3029,39 +2715,25 @@ function getClientHTML() {
         var c = $('#dmSidebar');
         if (!c) return;
         
-        c.innerHTML = '<div class="dm-header"><input type="text" class="dm-search" placeholder="Найти пользователя" id="dmSearch"></div>' +
-            '<div class="dm-list" id="dmList"></div>' +
-            '<div class="user-panel" id="userPanel"></div>';
+        c.innerHTML = '<div class="dm-header"><input type="text" class="dm-search" placeholder="Найти" id="dmSearch"></div>' +
+            '<div class="dm-list" id="dmList"></div><div class="user-panel" id="userPanel"></div>';
         
         renderDMList();
         renderUserPanel();
         
         $('#dmSearch').oninput = function(e) {
             var q = e.target.value;
-            if (q.length < 2) { 
-                renderDMList(); 
-                return; 
-            }
-            
+            if (q.length < 2) { renderDMList(); return; }
             api('/api/users/search?q=' + encodeURIComponent(q)).then(function(users) {
                 var list = $('#dmList');
-                if (!users.length) { 
-                    list.innerHTML = '<div class="empty-state"><p>Никого не найдено</p></div>'; 
-                    return; 
-                }
-                
+                if (!users.length) { list.innerHTML = '<div class="empty-state"><p>Никого</p></div>'; return; }
                 var html = '';
                 users.forEach(function(u) {
-                    html += '<div class="dm-item" data-user-id="' + u.id + '">';
-                    html += '<div class="avatar">' + getInitials(u.username) + '</div>';
-                    html += '<span class="name">' + escapeHtml(u.username) + '</span></div>';
+                    html += '<div class="dm-item" data-user-id="' + u.id + '"><div class="avatar">' + getInitials(u.username) + '</div><span class="name">' + escapeHtml(u.username) + '</span></div>';
                 });
                 list.innerHTML = html;
-                
                 $$('.dm-item[data-user-id]').forEach(function(el) {
-                    el.onclick = function() { 
-                        startDM(el.getAttribute('data-user-id')); 
-                    };
+                    el.onclick = function() { startDM(el.getAttribute('data-user-id')); };
                 });
             });
         };
@@ -3071,24 +2743,15 @@ function getClientHTML() {
         api('/api/dm').then(function(convs) {
             var list = $('#dmList');
             if (!list) return;
-            
-            if (!convs.length) { 
-                list.innerHTML = '<div class="empty-state"><p>Нет бесед</p></div>'; 
-                return; 
-            }
-            
+            if (!convs.length) { list.innerHTML = '<div class="empty-state"><p>Нет бесед</p></div>'; return; }
             var html = '';
             convs.forEach(function(c) {
-                html += '<div class="dm-item ' + (currentDM && currentDM.id === c.id ? 'active' : '') + '" data-dm-id="' + c.id + '" data-dm-name="' + escapeHtml(c.username) + '">';
-                html += '<div class="avatar">' + getInitials(c.username) + '</div>';
-                html += '<span class="name">' + escapeHtml(c.username) + '</span></div>';
+                html += '<div class="dm-item ' + (currentDM && currentDM.id === c.id ? 'active' : '') + '" data-dm-id="' + c.id + '" data-dm-name="' + escapeHtml(c.username) + '">' +
+                    '<div class="avatar">' + getInitials(c.username) + '</div><span class="name">' + escapeHtml(c.username) + '</span></div>';
             });
             list.innerHTML = html;
-            
             $$('.dm-item[data-dm-id]').forEach(function(el) {
-                el.onclick = function() { 
-                    selectDM(el.getAttribute('data-dm-id'), el.getAttribute('data-dm-name')); 
-                };
+                el.onclick = function() { selectDM(el.getAttribute('data-dm-id'), el.getAttribute('data-dm-name')); };
             });
         });
     }
@@ -3098,7 +2761,7 @@ function getClientHTML() {
         if (!c) return;
         
         if (!currentDM) {
-            c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><h3>Личные сообщения</h3><p>Выберите беседу</p></div>';
+            c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><h3>Личные сообщения</h3></div>';
             return;
         }
         
@@ -3113,23 +2776,17 @@ function getClientHTML() {
         setupDMInput();
     }
 
-    // ============================================
     // MODALS
-    // ============================================
-
     function showCreateServerModal() {
         var c = $('#modalContainer');
         c.innerHTML = '<div class="modal-overlay" id="modalOverlay"><div class="modal">' +
-            '<div class="modal-header"><h2>Создать сервер</h2></div>' +
+            '<div class="modal-header"><h2>Сервер</h2></div>' +
             '<div class="modal-tabs"><button class="active" id="createTab">Создать</button><button id="joinTab">Присоединиться</button></div>' +
             '<div class="modal-body" id="modalBody"><div class="form-group"><label>Название</label><input type="text" id="serverName" maxlength="100"></div></div>' +
             '<div class="modal-footer"><button class="btn secondary" id="cancelBtn">Отмена</button><button class="btn" id="modalAction">Создать</button></div></div></div>';
         
-        $('#modalOverlay').onclick = function(e) { 
-            if (e.target.id === 'modalOverlay') closeModal(); 
-        };
+        $('#modalOverlay').onclick = function(e) { if (e.target.id === 'modalOverlay') closeModal(); };
         $('#cancelBtn').onclick = closeModal;
-        
         $('#createTab').onclick = function() {
             $$('.modal-tabs button').forEach(function(b) { b.classList.remove('active'); });
             $('#createTab').classList.add('active');
@@ -3137,35 +2794,30 @@ function getClientHTML() {
             $('#modalAction').textContent = 'Создать';
             $('#modalAction').onclick = createServer;
         };
-        
         $('#joinTab').onclick = function() {
             $$('.modal-tabs button').forEach(function(b) { b.classList.remove('active'); });
             $('#joinTab').classList.add('active');
-            $('#modalBody').innerHTML = '<div class="form-group"><label>Код приглашения</label><input type="text" id="inviteCode" maxlength="10"></div>';
+            $('#modalBody').innerHTML = '<div class="form-group"><label>Код</label><input type="text" id="inviteCode" maxlength="10"></div>';
             $('#modalAction').textContent = 'Присоединиться';
-            $('#modalAction').onclick = joinServer;
+            $('#modalAction').onclick = joinServerAction;
         };
-        
         $('#modalAction').onclick = createServer;
     }
 
     function showCreateChannelModal(type) {
         var c = $('#modalContainer');
         c.innerHTML = '<div class="modal-overlay" id="modalOverlay"><div class="modal">' +
-            '<div class="modal-header"><h2>Создать ' + (type === 'voice' ? 'голосовой' : 'текстовый') + ' канал</h2></div>' +
+            '<div class="modal-header"><h2>' + (type === 'voice' ? 'Голосовой' : 'Текстовый') + ' канал</h2></div>' +
             '<div class="modal-body"><div class="form-group"><label>Название</label><input type="text" id="channelName" maxlength="100"></div></div>' +
             '<div class="modal-footer"><button class="btn secondary" id="cancelBtn">Отмена</button><button class="btn" id="createChannelBtn">Создать</button></div></div></div>';
         
-        $('#modalOverlay').onclick = function(e) { 
-            if (e.target.id === 'modalOverlay') closeModal(); 
-        };
+        $('#modalOverlay').onclick = function(e) { if (e.target.id === 'modalOverlay') closeModal(); };
         $('#cancelBtn').onclick = closeModal;
         $('#createChannelBtn').onclick = function() { createChannel(type); };
     }
 
     function showServerSettings() {
         if (!currentServer) return;
-        
         var c = $('#modalContainer');
         var footer = currentServer.owner_id === currentUser.id
             ? '<button class="btn" style="background:var(--red)" id="deleteServerBtn">Удалить</button>'
@@ -3173,38 +2825,23 @@ function getClientHTML() {
         
         c.innerHTML = '<div class="modal-overlay" id="modalOverlay"><div class="modal">' +
             '<div class="modal-header"><h2>' + escapeHtml(currentServer.name) + '</h2></div>' +
-            '<div class="modal-body"><div class="form-group"><label>Код приглашения</label><div class="invite-code" id="inviteCodeDisplay">Загрузка...</div></div></div>' +
+            '<div class="modal-body"><div class="form-group"><label>Код приглашения</label><div class="invite-code" id="inviteCodeDisplay">...</div></div></div>' +
             '<div class="modal-footer">' + footer + '<button class="btn secondary" id="closeBtn">Закрыть</button></div></div></div>';
         
-        $('#modalOverlay').onclick = function(e) { 
-            if (e.target.id === 'modalOverlay') closeModal(); 
-        };
+        $('#modalOverlay').onclick = function(e) { if (e.target.id === 'modalOverlay') closeModal(); };
         $('#closeBtn').onclick = closeModal;
-        
-        var deleteBtn = $('#deleteServerBtn');
-        if (deleteBtn) deleteBtn.onclick = deleteServer;
-        
-        var leaveBtn = $('#leaveServerBtn');
-        if (leaveBtn) leaveBtn.onclick = leaveServer;
+        if ($('#deleteServerBtn')) $('#deleteServerBtn').onclick = deleteServer;
+        if ($('#leaveServerBtn')) $('#leaveServerBtn').onclick = leaveServer;
         
         api('/api/servers/' + currentServer.id + '/invite').then(function(d) {
             $('#inviteCodeDisplay').textContent = d.invite_code;
         });
     }
 
-    function closeModal() { 
-        $('#modalContainer').innerHTML = ''; 
-    }
+    function closeModal() { $('#modalContainer').innerHTML = ''; }
 
-    // ============================================
     // ACTIONS
-    // ============================================
-
-    function loadServers() {
-        return api('/api/servers').then(function(d) { 
-            servers = d; 
-        });
-    }
+    function loadServers() { return api('/api/servers').then(function(d) { servers = d; }); }
 
     function selectServer(id) {
         api('/api/servers/' + id).then(function(d) {
@@ -3216,11 +2853,7 @@ function getClientHTML() {
         });
     }
 
-    function selectHome() { 
-        currentServer = null; 
-        currentChannel = null; 
-        render(); 
-    }
+    function selectHome() { currentServer = null; currentChannel = null; render(); }
 
     function selectChannel(id) {
         if (!currentServer) return;
@@ -3242,20 +2875,12 @@ function getClientHTML() {
     function setupMessageInput() {
         var input = $('#messageInput');
         if (!input) return;
-        
-        input.onkeydown = function(e) { 
-            if (e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                sendMessage(); 
-            } 
-        };
-        
+        input.onkeydown = function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
         input.oninput = function() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'TYPING_START', channelId: currentChannel.id }));
             }
         };
-        
         input.focus();
         $('#sendBtn').onclick = sendMessage;
     }
@@ -3264,55 +2889,35 @@ function getClientHTML() {
         var input = $('#messageInput');
         var content = input && input.value ? input.value.trim() : '';
         if (!content || !currentChannel) return;
-        
         if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ 
-                type: 'CHANNEL_MESSAGE', 
-                channelId: currentChannel.id, 
-                content: content 
-            }));
+            ws.send(JSON.stringify({ type: 'CHANNEL_MESSAGE', channelId: currentChannel.id, content: content }));
         }
         input.value = '';
     }
 
     function selectDM(id, name) {
         currentDM = { id: id, username: name };
-        api('/api/dm/' + id + '?limit=50').then(function(d) { 
-            messages = d; 
-            renderDMChatArea(); 
-        });
+        api('/api/dm/' + id + '?limit=50').then(function(d) { messages = d; renderDMChatArea(); });
     }
 
     function startDM(id) {
         currentServer = null;
         currentChannel = null;
-        
         api('/api/users/' + id).then(function(u) {
             currentDM = { id: id, username: u.username };
             return api('/api/dm/' + id + '?limit=50');
-        }).then(function(d) { 
-            messages = d; 
-            render(); 
-        });
+        }).then(function(d) { messages = d; render(); });
     }
 
     function setupDMInput() {
         var input = $('#messageInput');
         if (!input) return;
-        
-        input.onkeydown = function(e) { 
-            if (e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                sendDM(); 
-            } 
-        };
-        
+        input.onkeydown = function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDM(); } };
         input.oninput = function() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'TYPING_START', recipientId: currentDM.id }));
             }
         };
-        
         input.focus();
         $('#sendDMBtn').onclick = sendDM;
     }
@@ -3321,98 +2926,65 @@ function getClientHTML() {
         var input = $('#messageInput');
         var content = input && input.value ? input.value.trim() : '';
         if (!content || !currentDM) return;
-        
         if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ 
-                type: 'DIRECT_MESSAGE', 
-                recipientId: currentDM.id, 
-                content: content 
-            }));
+            ws.send(JSON.stringify({ type: 'DIRECT_MESSAGE', recipientId: currentDM.id, content: content }));
         }
         input.value = '';
     }
 
     function createServer() {
-        var nameEl = $('#serverName');
-        var name = nameEl ? nameEl.value : '';
-        if (!name || !name.trim()) { 
-            alert('Введите название'); 
-            return; 
-        }
-        
-        api('/api/servers', { method: 'POST', body: JSON.stringify({ name: name.trim() }) })
-            .then(function(s) {
-                servers.push(s);
-                closeModal();
-                selectServer(s.id);
-            })
-            .catch(function(e) { alert(e.message); });
+        var name = ($('#serverName') || {}).value;
+        if (!name || !name.trim()) { alert('Введите название'); return; }
+        api('/api/servers', { method: 'POST', body: JSON.stringify({ name: name.trim() }) }).then(function(s) {
+            servers.push(s);
+            closeModal();
+            selectServer(s.id);
+        }).catch(function(e) { alert(e.message); });
     }
 
-    function joinServer() {
-        var codeEl = $('#inviteCode');
-        var code = codeEl ? codeEl.value : '';
-        if (!code || !code.trim()) { 
-            alert('Введите код'); 
-            return; 
-        }
-        
-        api('/api/servers/join/' + code.trim(), { method: 'POST' })
-            .then(function(s) {
-                servers.push(s);
-                closeModal();
-                selectServer(s.id);
-            })
-            .catch(function(e) { alert(e.message); });
+    function joinServerAction() {
+        var code = ($('#inviteCode') || {}).value;
+        if (!code || !code.trim()) { alert('Введите код'); return; }
+        api('/api/servers/join/' + code.trim(), { method: 'POST' }).then(function(s) {
+            servers.push(s);
+            closeModal();
+            selectServer(s.id);
+        }).catch(function(e) { alert(e.message); });
     }
 
     function createChannel(type) {
-        var nameEl = $('#channelName');
-        var name = nameEl ? nameEl.value : '';
-        if (!name || !name.trim()) { 
-            alert('Введите название'); 
-            return; 
-        }
-        
-        api('/api/servers/' + currentServer.id + '/channels', { 
-            method: 'POST', 
-            body: JSON.stringify({ name: name.trim(), type: type }) 
-        })
-        .then(function() { closeModal(); })
-        .catch(function(e) { alert(e.message); });
+        var name = ($('#channelName') || {}).value;
+        if (!name || !name.trim()) { alert('Введите название'); return; }
+        api('/api/servers/' + currentServer.id + '/channels', { method: 'POST', body: JSON.stringify({ name: name.trim(), type: type }) })
+            .then(function() { closeModal(); })
+            .catch(function(e) { alert(e.message); });
     }
 
     function deleteChannel(id) {
-        if (!confirm('Удалить канал?')) return;
+        if (!confirm('Удалить?')) return;
         api('/api/channels/' + id, { method: 'DELETE' }).catch(function(e) { alert(e.message); });
     }
 
     function deleteServer() {
-        if (!confirm('Удалить сервер? Это нельзя отменить!')) return;
-        
-        api('/api/servers/' + currentServer.id, { method: 'DELETE' })
-            .then(function() {
-                servers = servers.filter(function(s) { return s.id !== currentServer.id; });
-                currentServer = null;
-                currentChannel = null;
-                closeModal();
-                render();
-            })
-            .catch(function(e) { alert(e.message); });
+        if (!confirm('Удалить сервер?')) return;
+        api('/api/servers/' + currentServer.id, { method: 'DELETE' }).then(function() {
+            servers = servers.filter(function(s) { return s.id !== currentServer.id; });
+            currentServer = null;
+            currentChannel = null;
+            closeModal();
+            render();
+        }).catch(function(e) { alert(e.message); });
     }
 
     function leaveServer() {
-        if (!confirm('Покинуть сервер?')) return;
-        
-        api('/api/servers/' + currentServer.id + '/leave', { method: 'POST' })
-            .then(function() {
-                servers = servers.filter(function(s) { return s.id !== currentServer.id; });
-                currentServer = null;
-                currentChannel = null;
-                closeModal();
-                render();
-            })
-            .catch(function(e) { alert(e.message); });
+        if (!confirm('Покинуть?')) return;
+        api('/api/servers/' + currentServer.id + '/leave', { method: 'POST' }).then(function() {
+            servers = servers.filter(function(s) { return s.id !== currentServer.id; });
+            currentServer = null;
+            currentChannel = null;
+            closeModal();
+            render();
+        }).catch(function(e) { alert(e.message); });
     }
 
     function scrollToBottom() {
@@ -3422,42 +2994,41 @@ function getClientHTML() {
 
     function logout() {
         if (currentVoiceChannel) leaveVoiceChannel();
-        
         token = null;
         currentUser = null;
         localStorage.removeItem('token');
-        
         if (ws) ws.close();
-        
         servers = [];
         currentServer = null;
         currentChannel = null;
         currentDM = null;
         messages = [];
-        
         render();
     }
 
-    // ============================================
-    // INIT
-    // ============================================
+    // Toggle debug with Ctrl+D
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            debugMode = !debugMode;
+            var panel = document.getElementById('debugPanel');
+            if (panel) panel.classList.toggle('show', debugMode);
+        }
+    });
 
+    // INIT
     function init() {
         token = localStorage.getItem('token');
-        
         if (token) {
-            api('/api/auth/me')
-                .then(function(u) {
-                    currentUser = u;
-                    connectWebSocket();
-                    return loadServers();
-                })
-                .then(function() { render(); })
-                .catch(function() {
-                    token = null;
-                    localStorage.removeItem('token');
-                    render();
-                });
+            api('/api/auth/me').then(function(u) {
+                currentUser = u;
+                connectWebSocket();
+                return loadServers();
+            }).then(function() { render(); }).catch(function() {
+                token = null;
+                localStorage.removeItem('token');
+                render();
+            });
         } else {
             render();
         }
