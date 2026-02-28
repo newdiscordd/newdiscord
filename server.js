@@ -1269,11 +1269,11 @@ function getClientHTML() {
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
             { urls: 'stun:stun2.l.google.com:19302' },
-            
+        
             // Twilio STUN (free)
             { urls: 'stun:global.stun.twilio.com:3478' },
-            
-            // Open Relay TURN (free, may be slow/unreliable)
+        
+            // Open Relay TURN (free)
             {
                 urls: 'turn:openrelay.metered.ca:80',
                 username: 'openrelayproject',
@@ -1288,23 +1288,6 @@ function getClientHTML() {
                 urls: 'turn:openrelay.metered.ca:443?transport=tcp',
                 username: 'openrelayproject',
                 credential: 'openrelayproject'
-            },
-            
-            // Metered free TURN (alternative credentials)
-            {
-                urls: 'turn:a.]relay.metered.ca:80',
-                username: 'e8c9d3f8a0c3d2e1b4a5',
-                credential: 'fK3mN9pQ2rS5tU8v'
-            },
-            {
-                urls: 'turn:a.relay.metered.ca:443',
-                username: 'e8c9d3f8a0c3d2e1b4a5',
-                credential: 'fK3mN9pQ2rS5tU8v'
-            },
-            {
-                urls: 'turn:a.relay.metered.ca:443?transport=tcp',
-                username: 'e8c9d3f8a0c3d2e1b4a5',
-                credential: 'fK3mN9pQ2rS5tU8v'
             }
         ];
     }
