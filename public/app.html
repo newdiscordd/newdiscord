@@ -557,6 +557,7 @@
         async function loadMessages(channelId) {
             const res = await fetch(`/api/messages/${channelId}`, { headers: { Authorization: `Bearer ${token}` } });
             const msgs = await res.json();
+
             const container = document.getElementById('messages');
             container.innerHTML = msgs.map(m => `
                 <div class="flex gap-3 hover:bg-[#2e3035] -mx-2 p-2 rounded">
