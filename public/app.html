@@ -11,8 +11,28 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #2b2d31; }
         ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
-        .active-channel { background-color: #404249; color: white; }
-        .active-dm { background-color: #404249; }
+        .active-channel { position: relative; background-color: #404249; color: white; }
+        .active-channel::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            bottom: 6px;
+            width: 3px;
+            border-radius: 9999px;
+            background-color: #5865F2;
+        }
+        .active-dm { position: relative; background-color: #404249; }
+        .active-dm::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            bottom: 6px;
+            width: 3px;
+            border-radius: 9999px;
+            background-color: #fff;
+        }
         .modal { display: none; position: fixed; z-index: 50; inset: 0; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
         .modal.show { display: flex; }
         .server-icon { transition: all 0.2s; }
@@ -411,7 +431,7 @@
             } else {
                 container.innerHTML = state.friends.map(friend => `
                     <div onclick="openDirectMessage('${friend.id}')" 
-                         class="flex items-center gap-3 px-2 py-2 rounded cursor-pointer hover:bg-[#35373C] hover:text-white ${state.activeFriend?.id === friend.id ? 'active-dm' : ''}">
+                         class="flex items-center gap-3 pl-4 pr-2 py-2 rounded cursor-pointer hover:bg-[#35373C] hover:text-white ${state.activeFriend?.id === friend.id ? 'active-dm' : ''}">
                         <img src="${friend.avatar}" class="w-8 h-8 rounded-full">
                         <span class="font-medium">${friend.username}</span>
                     </div>
@@ -510,7 +530,7 @@
             container.innerHTML = channels.map(c => {
                 let channelHtml = `
                     <div onclick="joinChannel('${c.id}', '${c.type}')" 
-                         class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-[#35373C] hover:text-white ${state.activeChannel?.id === c.id ? 'active-channel' : ''}">
+                         class="flex items-center gap-2 pl-4 pr-2 py-1 rounded cursor-pointer hover:bg-[#35373C] hover:text-white ${state.activeChannel?.id === c.id ? 'active-channel' : ''}">
                         <i data-lucide="${c.type === 'TEXT' ? 'hash' : 'volume-2'}" width="16"></i> ${c.name}
                     </div>
                 `;
