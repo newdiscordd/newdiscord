@@ -167,7 +167,7 @@
     <!-- Основная область -->
     <div class="flex-1 flex flex-col min-w-0 bg-[#313338]">
         <div class="h-12 border-b border-[#26272D] flex items-center px-4 font-bold text-white shadow justify-between">
-            <span id="channel-header">Выберите чат</span>
+            <div id="channel-header" class="flex items-center gap-2"><span id="channel-header-name">Выберите чат</span></div>
             <div id="voice-call-btn" class="hidden">
                 <button onclick="startDirectCall()" class="text-gray-400 hover:text-white p-2 rounded hover:bg-[#404249]" title="Голосовой звонок">
                     <i data-lucide="phone" width="20"></i>
@@ -397,6 +397,21 @@
             lucide.createIcons();
         }
 
+
+        function renderChannelHeader(name, icon = null) {
+            const header = document.getElementById('channel-header');
+            if (!header) return;
+
+            header.innerHTML = icon
+                ? `
+                    <i data-lucide="${icon}" width="18"></i>
+                    <span id="channel-header-name">${name}</span>
+                `
+                : `<span id="channel-header-name">${name}</span>`;
+
+            lucide.createIcons();
+        }
+
         function showDirectMessages() {
             state.activeView = 'dm';
             state.activeServer = null;
@@ -421,7 +436,7 @@
             document.getElementById('chat-view').classList.add('hidden');
             document.getElementById('voice-view').classList.add('hidden');
             document.getElementById('empty-view').classList.remove('hidden');
-            document.getElementById('channel-header').innerText = 'Выберите чат';
+            renderChannelHeader('Выберите чат');
             document.getElementById('voice-call-btn').classList.add('hidden');
             
             lucide.createIcons();
@@ -435,7 +450,7 @@
             state.activeChannel = null;
             
             showDirectMessages();
-            document.getElementById('channel-header').innerText = '@ ' + friend.username;
+            renderChannelHeader(friend.username, 'at-sign');
             document.getElementById('voice-call-btn').classList.remove('hidden');
             document.getElementById('empty-view').classList.add('hidden');
             document.getElementById('chat-view').classList.remove('hidden');
@@ -537,7 +552,7 @@
             const channel = channels.find(c => c.id === id);
             if (!channel) return;
             state.activeChannel = channel;
-            document.getElementById('channel-header').innerText = (type === 'TEXT' ? '# ' : '🔊 ') + channel.name;
+            renderChannelHeader(channel.name, type === 'TEXT' ? 'hash' : 'volume-2');
             
             document.getElementById('empty-view').classList.add('hidden');
             document.getElementById('chat-view').classList.toggle('hidden', type !== 'TEXT');
@@ -921,7 +936,7 @@
                 const textChannel = state.activeServer.channels.find(c => c.type === 'TEXT');
                 if (textChannel) {
                     state.activeChannel = textChannel;
-                    document.getElementById('channel-header').innerText = '# ' + textChannel.name;
+                    renderChannelHeader(textChannel.name, 'hash');
                     document.getElementById('empty-view').classList.add('hidden');
                     document.getElementById('chat-view').classList.remove('hidden');
                     document.getElementById('voice-view').classList.add('hidden');
