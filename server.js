@@ -26,26 +26,16 @@ const ICE_SERVERS = [
     // Google STUN серверы
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    { urls: 'stun:stun4.l.google.com:19302' },
-    // Twilio STUN
-    { urls: 'stun:global.stun.twilio.com:3478' },
-    // Open Relay TURN серверы (бесплатные)
+    // Твой TURN сервер
     {
-        urls: 'turn:openrelay.metered.ca:80',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
+        urls: 'turn:195.133.53.53:3478',
+        username: 'discordclone',
+        credential: '123456'
     },
     {
-        urls: 'turn:openrelay.metered.ca:443',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
-    },
-    {
-        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-        username: 'openrelayproject',
-        credential: 'openrelayproject'
+        urls: 'turn:195.133.53.53:3478?transport=tcp',
+        username: 'discordclone',
+        credential: '123456'
     }
 ];
 
@@ -1620,24 +1610,15 @@ function getClientHTML() {
         return [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' },
-            { urls: 'stun:global.stun.twilio.com:3478' },
             {
-                urls: 'turn:openrelay.metered.ca:80',
-                username: 'openrelayproject',
-                credential: 'openrelayproject'
+                urls: 'turn:195.133.53.53:3478',
+                username: 'discordclone',
+                credential: 'ТвойСильныйПароль123!'
             },
             {
-                urls: 'turn:openrelay.metered.ca:443',
-                username: 'openrelayproject',
-                credential: 'openrelayproject'
-            },
-            {
-                urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                username: 'openrelayproject',
-                credential: 'openrelayproject'
+                urls: 'turn:195.133.53.53:3478?transport=tcp',
+                username: 'discordclone',
+                credential: 'ТвойСильныйПароль123!'
             }
         ];
     }
