@@ -441,6 +441,39 @@ function handleStreamStop(odego) {
     });
 }
 
+// === НОВАЯ ФУНКЦИЯ: КИК ИЗ ГОЛОСОВОГО КАНАЛА ===
+async function handleVoiceKick(adminId, targetId, channelId) {
+    const room = voiceRooms.get(channelId);
+    if (!room || !room.has(targetId)) return;
+
+    const channelRes = await pool.query('SELECT server_id FROM channels WHERE id = $1', [channelId]);
+    if (!channelRes.rows[0]) return;
+
+    const serverRes = await pool.query(
+        'SELECT 1 FROM servers WHERE id = $1 AND owner_id = $2',
+        [channelRes.rows[0].server_id, adminId]
+    );
+
+    if (!serverRes.rows[0]) {
+        sendToUser(adminId, { type: 'VOICE_ERROR', error: 'Недостаточно прав для кика' });
+        return;
+    }
+
+    console.log(`[VOICE_KICK] ${adminId} kicked ${targetId} from ${channelId}`);
+
+    sendToUser(targetId, { 
+        type: 'VOICE_KICKED', 
+        reason: 'Вы были выгнаны из голосового канала' 
+    });
+
+    await handleVoiceLeave(targetId);
+
+    broadcastToVoiceChannel(channelId, {
+        type: 'VOICE_USER_KICKED',
+        channelId: channelId,
+        visitorId: targetId
+    }, adminId);
+}
 wss.on('connection', (ws) => {
     let odego = null;
     let username = null;
@@ -572,7 +605,14 @@ wss.on('connection', (ws) => {
                 case 'VOICE_STREAM_STOP':
                     handleStreamStop(odego);
                     break;
-
+                    
+                // === НОВАЯ ОБРАБОТКА КИКА ===
+                case 'VOICE_KICK':
+                    if (msg.targetUserId && msg.channelId) {
+                        await handleVoiceKick(odego, msg.targetUserId, msg.channelId);
+                    }
+                    break;
+                    
                 case 'CHANNEL_MESSAGE': {
                     const { channelId, content, imageUrl } = msg;
                     const textContent = typeof content === 'string' ? content.trim() : '';
@@ -1440,6 +1480,29 @@ function getClientHTML() {
         .debug-panel .success { color: #0f0; }
         @media (max-width: 900px) { .members-sidebar { display: none; } }
         @media (max-width: 600px) { .channel-sidebar, .dm-sidebar { width: 200px; } }
+                .voice-participant .kick-btn,
+        .voice-grid-item .kick-btn {
+            background: none;
+            border: none;
+            color: var(--red);
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+        .voice-participant .kick-btn:hover,
+        .voice-grid-item .kick-btn:hover {
+            opacity: 1;
+            background: rgba(242,63,67,0.1);
+        }
+        .dm-link {
+            cursor: pointer;
+        }
+        .dm-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -2882,7 +2945,7 @@ function getClientHTML() {
         renderUserPanel();
     }
 
-    function renderChannels() {
+        function renderChannels() {
         var c = $('#channelList'); if (!c || !currentServer) return;
         var channels = currentServer.channels || [];
         var textCh = channels.filter(function(ch) { return ch.type === 'text'; });
@@ -2899,6 +2962,85 @@ function getClientHTML() {
             }
             html += '</div>';
         });
+
+        html += '<div class="channel-category"><span>ГОЛОСОВЫЕ КАНАЛЫ</span>';
+        if (currentServer.owner_id === currentUser.id) html += '<button id="addVoiceChannel" title="Создать канал">' + icon('plus') + '</button>';
+        html += '</div>';
+        voiceCh.forEach(function(ch) {
+            var parts = ch.voiceParticipants || [];
+            var hasUsers = parts.length > 0;
+            var isConn = currentVoiceChannel && currentVoiceChannel.id === ch.id;
+            html += '<div class="voice-channel ' + (hasUsers ? 'has-users' : '') + '">';
+            html += '<div class="channel-item ' + (isConn ? 'active' : '') + '" data-voice-channel-id="' + ch.id + '">';
+            html += '<span class="icon">' + icon('voice') + '</span><span class="name">' + escapeHtml(ch.name) + '</span>';
+            if (currentServer.owner_id === currentUser.id && voiceCh.length > 1) {
+                html += '<button class="delete-btn" data-delete-channel="' + ch.id + '" title="Удалить">' + icon('close') + '</button>';
+            }
+            html += '</div>';
+            if (hasUsers) {
+                html += '<div class="voice-participants">';
+                parts.forEach(function(p) {
+                    var uid = p.visitorId || p.odego;
+                    var isOwner = currentServer.owner_id === currentUser.id;
+                    var isSpeaking = speakingUsers.has(uid);
+                    html += '<div class="voice-participant ' + (isSpeaking ? 'speaking' : '') + '" data-user-id="' + uid + '">';
+                    html += '<div class="avatar dm-link" data-user-id="' + uid + '">' + renderAvatarContent(p.username, p.avatar_url) + '</div>';
+                    html += '<span class="name dm-link" data-user-id="' + uid + '">' + escapeHtml(p.username) + '</span>';
+                    html += '<span class="status-icons">';
+                    if (p.streaming) html += '<span class="stream-icon" title="Стримит">' + icon('users') + '</span>';
+                    if (p.muted) html += '<span class="mute-icon" title="Замьючен">' + icon('muted') + '</span>';
+                    if (p.deafened) html += '<span class="deafen-icon" title="Оглушён">' + icon('deafen') + '</span>';
+                    if (isOwner && uid !== currentUser.id) {
+                        html += '<button class="kick-btn" data-target="' + uid + '" title="Выгнать">✕</button>';
+                    }
+                    html += '</span></div>';
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+        });
+        c.innerHTML = html;
+
+        $$('.dm-link').forEach(function(el) {
+            el.onclick = function(e) {
+                e.stopPropagation();
+                startDM(el.getAttribute('data-user-id'));
+            };
+        });
+
+        $$('.kick-btn').forEach(function(btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                var target = btn.getAttribute('data-target');
+                if (confirm('Выгнать пользователя из голосового канала?')) {
+                    ws.send(JSON.stringify({
+                        type: 'VOICE_KICK',
+                        targetUserId: target,
+                        channelId: currentVoiceChannel ? currentVoiceChannel.id : null
+                    }));
+                }
+            };
+        });
+
+        if ($('#addTextChannel')) $('#addTextChannel').onclick = function() { showCreateChannelModal('text'); };
+        if ($('#addVoiceChannel')) $('#addVoiceChannel').onclick = function() { showCreateChannelModal('voice'); };
+        $$('.channel-item[data-channel-id]').forEach(function(el) {
+            el.onclick = function(e) {
+                if (!e.target.classList.contains('delete-btn')) selectChannel(el.getAttribute('data-channel-id'));
+            };
+        });
+        $$('.channel-item[data-voice-channel-id]').forEach(function(el) {
+            el.onclick = function(e) {
+                if (!e.target.classList.contains('delete-btn')) {
+                    var ch = currentServer.channels.find(function(c) { return c.id === el.getAttribute('data-voice-channel-id'); });
+                    if (ch) joinVoiceChannel(ch);
+                }
+            };
+        });
+        $$('[data-delete-channel]').forEach(function(el) {
+            el.onclick = function(e) { e.stopPropagation(); deleteChannel(el.getAttribute('data-delete-channel')); };
+        });
+    }
 
         html += '<div class="channel-category"><span>ГОЛОСОВЫЕ КАНАЛЫ</span>';
         if (currentServer.owner_id === currentUser.id) html += '<button id="addVoiceChannel" title="Создать канал">' + icon('plus') + '</button>';
@@ -3148,23 +3290,49 @@ function getClientHTML() {
             var isSpeaking = speakingUsers.has(uid);
             var streams = remoteStreams.get(uid);
             var hasScreen = streams && streams.screen;
-            var isFocused = focusedStream === uid;
-            html += '<div class="voice-grid-item ' + (isSpeaking ? 'speaking' : '') + (p.streaming ? ' streaming' : '') + (isFocused ? ' focused' : '') + '" data-user-id="' + uid + '" data-focusable="' + (hasScreen ? 'true' : 'false') + '">';
+            var isOwner = currentServer && currentServer.owner_id === currentUser.id;
+            html += '<div class="voice-grid-item ' + (isSpeaking ? 'speaking' : '') + (p.streaming ? ' streaming' : '') + '" data-user-id="' + uid + '">';
             if (hasScreen) {
                 html += '<video id="screen-video-' + uid + '" autoplay playsinline></video>';
             } else {
-                html += '<div class="avatar">' + renderAvatarContent(p.username, p.avatar_url) + '</div>';
+                html += '<div class="avatar dm-link" data-user-id="' + uid + '">' + renderAvatarContent(p.username, p.avatar_url) + '</div>';
             }
-            html += '<div class="username">' + escapeHtml(p.username) + '</div>';
+            html += '<div class="username dm-link" data-user-id="' + uid + '">' + escapeHtml(p.username) + '</div>';
             html += '<div class="status-icons">';
             if (p.streaming) html += '<span title="Стримит">' + icon('video') + '</span>';
             if (p.muted) html += '<span title="Замьючен">' + icon('muted') + '</span>';
             if (p.deafened) html += '<span title="Оглушён">' + icon('deafen') + '</span>';
+            if (isOwner && uid !== currentUser.id) {
+                html += '<button class="kick-btn grid-kick" data-target="' + uid + '">✕</button>';
+            }
             html += '</div></div>';
         });
         html += '</div>';
         c.innerHTML = html;
+
         $('#closeVoiceGrid').onclick = function() { showVoiceGrid = false; render(); };
+
+        $$('.dm-link').forEach(function(el) {
+            el.onclick = function(e) {
+                e.stopPropagation();
+                startDM(el.getAttribute('data-user-id'));
+            };
+        });
+
+        $$('.grid-kick').forEach(function(btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                var target = btn.getAttribute('data-target');
+                if (confirm('Выгнать пользователя из голосового канала?')) {
+                    ws.send(JSON.stringify({
+                        type: 'VOICE_KICK',
+                        targetUserId: target,
+                        channelId: currentVoiceChannel.id
+                    }));
+                }
+            };
+        });
+
         if (isScreenSharing && screenStream) {
             var myVideo = document.getElementById('my-screen-video');
             if (myVideo) myVideo.srcObject = screenStream;
@@ -3175,15 +3343,8 @@ function getClientHTML() {
                 if (video) video.srcObject = streams.screen;
             }
         });
-        $$('.voice-grid-item[data-focusable="true"]').forEach(function(el) {
-            el.onclick = function() {
-                var uid = el.getAttribute('data-user-id');
-                focusedStream = focusedStream === uid ? null : uid;
-                renderVoiceGrid();
-            };
-        });
     }
-
+    
     function renderChatArea() {
         var c = $('#chatArea'); if (!c) return;
         if (!currentChannel) {
